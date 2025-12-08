@@ -60,46 +60,46 @@ export function levelStatus(params) {
 // 所有护理项目信息
 export function getAllProjectList() {
   return request.get<ProjecListModel>({
-    url: `/nursing_project/all`
+    url: `/nursing-project/all`
   })
 }
 // 分页查询护理项目信息
 export function getProjectList(params) {
   return request.get<ProjecListModel>({
-    url: `/nursing_project`,
+    url: `/nursing-project/page`,
     params
   })
 }
 // 获取护理项目详情
 export function getProjectDetails(id) {
   return request.get<ProjecListModel>({
-    url: `/nursing_project/${id}`
+    url: `/nursing-project/${id}`
   })
 }
 // 护理项目添加
 export function projectAdd(params: FormLevel) {
   return request.post<ProjecListModel>({
-    url: '/nursing_project',
+    url: '/nursing-project/add',
     data: params
   })
 }
 // 护理项目编辑
 export function projectUpdate(params: ProjecListModel) {
   return request.put<ProjecListModel>({
-    url: `/nursing_project`,
+    url: '/nursing-project/update',
     data: params
   })
 }
 // 护理项目删除
 export function projectDelete(id) {
   return request.delete({
-    url: `/nursing_project/${id}`
+    url: `/nursing-project/delete/${id}`
   })
 }
 // 护理项目禁用启用
 export function projectStatus(params) {
   return request.put({
-    url: `/nursing_project/${params.id}/status/${params.status}`
+    url: `/nursing-project/${params.id}/status/${params.status}`
   })
 }
 // 护理计划
