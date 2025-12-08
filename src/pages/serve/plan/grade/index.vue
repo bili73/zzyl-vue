@@ -212,13 +212,17 @@ const handleClickDelete = (val) => {
 const handleForbidden = (val) => {
   typeId.value = val.id
   if (val.status === 1) {
+    // 如果当前是启用状态，则显示禁用确认弹窗
     dialogVisible.value = true
     typeStatus.value = 0
     statusText.value = '禁用成功'
+    operateText.value = '禁用该护理等级'
   } else {
+    // 如果当前是禁用状态，则显示启用确认弹窗
+    dialogVisible.value = true
     typeStatus.value = 1
-    handleForbiddenSub()
     statusText.value = '启用成功'
+    operateText.value = '启用该护理等级'
   }
 }
 // 翻页设置当前页

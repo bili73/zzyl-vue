@@ -66,6 +66,7 @@
 </template>
 
 <script setup lang="ts">
+import { MessagePlugin } from 'tdesign-vue-next'
 // 表格
 import { COLUMNS } from '../constants' // 表格列
 // 校验
@@ -119,6 +120,12 @@ const handleEdit = (row) => {
 }
 // 点击删除
 const handleClickDelete = (row) => {
+  // 检查护理等级是否正在使用（status为1表示启用中）
+  if (row.status === 1) {
+    MessagePlugin.warning('该护理等级启用中不能删除')
+    return
+  }
+
   if (row.cid === undefined || !row.cid) {
     emit('handleClickDelete', row)
   }
