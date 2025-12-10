@@ -239,7 +239,7 @@ const addUserDeta = async (params?: any, flag?: Boolean) => {
     if (res.code === 200) {
       handleClose()
       dialog.value.onClickCloseBtn()
-      if (flag) {
+      if (title.value === '新增用户' || flag) {
         MessagePlugin.success(`${title.value}成功！`)
         getTableData()
       } else {
