@@ -6,6 +6,7 @@ import { VAxios } from './Axios'
 import proxy from '@/config/proxy'
 import { joinTimestamp, formatRequestDate, setObjToUrlParams } from './utils'
 import router from '../../router/index'
+import { TOKEN_NAME } from '@/config/global'
 
 const env = import.meta.env.MODE || 'development'
 // 确保使用存在的环境配置，如果当前env不存在则fallback到development
@@ -125,13 +126,12 @@ const transform: AxiosTransform = {
 
   // 请求拦截器处理
   requestInterceptors: (config, options) => {
-    const user = JSON.parse(localStorage.getItem('user'))
+    // 修复：从正确的localStorage key中获取token，与TOKEN_NAME保持一致
+    const token = localStorage.getItem(TOKEN_NAME)
     // 若没有token则返回登录页面
-    if (!user || !user.token) {
+    if (!token) {
       router.push('/login')
     }
-    let token = ''
-    if (user) token = user.token
     // 请求之前处理config
     if (token && (config as Recordable)?.requestOptions?.withToken !== false) {
       // jwt token

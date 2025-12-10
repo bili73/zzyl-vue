@@ -52,6 +52,8 @@ export const useUserStore = defineStore('user', {
     },
     async login(token: string) {
       this.token = `${token}`
+      // 同时将token保存到localStorage，以便request interceptor能够获取
+      localStorage.setItem(TOKEN_NAME, token)
     },
     async setMenuListdata(data: any) {
       this.menuListdata = data
