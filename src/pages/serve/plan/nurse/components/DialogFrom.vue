@@ -46,7 +46,7 @@
                   :scroll="{ type: 'virtual', rowHeight: 48, bufferSize: 10 }"
                   :height="data.length < 6 ? null : 423"
                   :async-loading="loadingNode"
-                  @row-edit="onRowEdit"
+                  @edit="onRowEdit"
                   @scroll="handleScroll($event)"
                 >
                   <!-- 护理项目 -->
@@ -59,6 +59,26 @@
                       :value-empty="row.valueEmpty"
                       @select="selectChange"
                       @getSelectOldData="getSelectOldData"
+                    />
+                  </template>
+                  <!-- end -->
+                  <!-- 期望服务时间 -->
+                  <template #executeTime="{ row }">
+                    <t-time-picker
+                      v-model="row.executeTime"
+                      format="HH:mm"
+                      placeholder="选择时间"
+                      class="timeInput"
+                    />
+                  </template>
+                  <!-- end -->
+                  <!-- 执行周期 -->
+                  <template #executeCycle="{ row }">
+                    <t-select
+                      v-model="row.executeCycle"
+                      :options="periodData"
+                      placeholder="选择周期"
+                      clearable
                     />
                   </template>
                   <!-- end -->
@@ -225,41 +245,12 @@ const FROMCOLUMNS = computed(() => {
     {
       title: '期望服务时间',
       colKey: 'executeTime',
-      className: 't-demo-col__datepicker',
-      // props, 透传全部属性到 DatePicker 组件
-      edit: {
-        component: TimePicker,
-        props: {
-          format: 'HH:mm'
-        },
-        showEditIcon: false,
-        // 默认是否为编辑状态
-        defaultEditable: true,
-        // 校验规则，此处同 Form 表单
-        rules: [{ required: true }]
-      },
-      cell: (h, { row }) => {
-        return row.executeTime
-      }
+      width: 150
     },
     {
       title: '执行周期',
       colKey: 'executeCycle',
-      cell: (h, { row }) =>
-        periodData.find((t) => t.value === row.executeCycle)?.label,
-      edit: {
-        component: Select,
-        // props, 透传全部属性到 Select 组件
-        props: {
-          clearable: true,
-          options: periodData
-        },
-        // 校验规则，此处同 Form 表单
-        rules: [{ required: true, message: '请输入' }],
-        showEditIcon: false,
-        // 默认是否为编辑状态
-        defaultEditable: true
-      }
+      width: 120
     },
     {
       title: '执行频次(次)',
@@ -409,9 +400,11 @@ const onClickCloseBtn = () => {
 }
 
 // 编辑行后获取所有触发的数据
-const onRowEdit = (params) => {
+const onRowEdit = ({ row, col, value, rowIndex }) => {
   // 修改后的当前行赋值给原始数据
-  paramsData.value[params.rowIndex][params.col.colKey] = params.value
+  // 同时更新 data.value，确保提交时使用的是最新数据
+  data.value[rowIndex][col.colKey] = value
+  paramsData.value[rowIndex][col.colKey] = value
 }
 // 删除一条护理项目
 const handleDelete = (val, index) => {
