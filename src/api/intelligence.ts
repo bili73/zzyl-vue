@@ -39,9 +39,9 @@ export function deleteDevice(params) {
 }
 // 获取设备详情
 export function getDetail(params) {
-  return request.get({
+  return request.post({
     url: '/iot/QueryDeviceDetail',
-    params
+    data: params
   })
 }
 // 详情运行状态事件管理
