@@ -301,21 +301,38 @@ const handleEdit = (val) => {
 }
 // 确认删除
 const handleDelete = async () => {
+  console.log('=== 确认删除设备 ===')
+  console.log('iotId:', iotId.value)
+  console.log('productKey:', productKey.value)
+
   const params = {
     iotId: iotId.value,
     productKey: productKey.value
   }
+
+  console.log('准备调用deleteDevice API，参数:', params)
   const res: any = await deleteDevice(params)
+  console.log('deleteDevice API返回结果:', res)
+
   if (res.code === 200) {
     dialogDeleteVisible.value = false
     MessagePlugin.success('删除成功')
     setTime()
+    console.log('设备删除成功')
+  } else {
+    console.log('设备删除失败:', res.message)
+    MessagePlugin.error(res.message || '删除失败')
   }
 }
 // 点击删除
 const handleClickDelete = (val) => {
+  console.log('=== 点击删除按钮 ===')
+  console.log('删除的设备数据:', val)
+
   iotId.value = val.iotId
   productKey.value = val.productKey
+  console.log('设置删除参数 - iotId:', iotId.value, 'productKey:', productKey.value)
+
   dialogDeleteVisible.value = true
 }
 // 翻页设置当前页

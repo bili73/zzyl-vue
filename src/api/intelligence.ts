@@ -32,8 +32,7 @@ export function editDevice(params) {
 }
 // 删除设备
 export function deleteDevice(params) {
-  return request({
-    method: 'delete',
+  return request.delete({
     url: '/iot/DeleteDevice',
     data: params
   })
