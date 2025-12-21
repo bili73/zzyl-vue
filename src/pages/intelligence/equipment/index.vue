@@ -196,16 +196,27 @@ const getList = async () => {
 }
 // 获取详情数据
 const getDetails = async () => {
+  console.log('=== getDetails函数被调用 ===')
+  console.log('iotId:', iotId.value)
+  console.log('productKey:', productKey.value)
+
   const params = {
     iotId: iotId.value,
     productKey: productKey.value
   }
+
+  console.log('准备调用getDetail API，参数:', params)
   const res: any = await getDetail(params) // 获取列表数据
+  console.log('getDetail API返回结果:', res)
+
   if (res.code === 200) {
     formBaseData.value = res.data
+    console.log('设置formBaseData:', formBaseData.value)
+
     if (formBaseData.value.locationType === 0) {
       formBaseData.value.elderId = formBaseData.value.bindingLocation
       formBaseData.value.elderName = formBaseData.value.remark
+      console.log('随身设备数据处理完成:', formBaseData.value)
     }
   }
 }
@@ -272,8 +283,14 @@ const handleBulid = () => {
 }
 // 编辑
 const handleEdit = (val) => {
+  console.log('=== handleEdit函数被调用 ===')
+  console.log('编辑的设备数据:', val)
+
   iotId.value = val.iotId
   productKey.value = val.productKey
+  console.log('设置iotId:', iotId.value)
+  console.log('设置productKey:', productKey.value)
+
   // 获取详情
   getDetails()
   // 显示新建弹窗

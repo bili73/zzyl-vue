@@ -16,30 +16,33 @@ export function getDeviceList(params) {
 }
 // 添加设备
 export function addDevice(params) {
-  return request.post({
+  return request({
+    method: 'post',
     url: '/iot/RegisterDevice',
-    params
+    data: params
   })
 }
 // 编辑设备
 export function editDevice(params) {
-  return request.post({
+  return request({
+    method: 'post',
     url: '/iot/UpdateDevice',
-    params
+    data: params
   })
 }
 // 删除设备
 export function deleteDevice(params) {
-  return request.delete({
+  return request({
+    method: 'delete',
     url: '/iot/DeleteDevice',
-    params
+    data: params
   })
 }
 // 获取设备详情
 export function getDetail(params) {
   return request.post({
     url: '/iot/QueryDeviceDetail',
-    params
+    data: params
   })
 }
 // 详情运行状态事件管理
