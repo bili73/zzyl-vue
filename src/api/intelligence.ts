@@ -16,16 +16,14 @@ export function getDeviceList(params) {
 }
 // 添加设备
 export function addDevice(params) {
-  return request({
-    method: 'post',
+  return request.post({
     url: '/iot/RegisterDevice',
     data: params
   })
 }
 // 编辑设备
 export function editDevice(params) {
-  return request({
-    method: 'post',
+  return request.post({
     url: '/iot/UpdateDevice',
     data: params
   })

@@ -231,7 +231,7 @@ const userStore = useUserStore()
 // 获取当前房间对应的物模型数据
 const getRoomWuData = (item) => {
   const wuList = []
-  if (item && item.deviceVos.length) {
+  if (item && item.deviceVos && item.deviceVos.length) {
     item.deviceVos.forEach((item1) => {
       if (item1.deviceDataVos) {
         wuList.push(...item1.deviceDataVos)
