@@ -240,3 +240,11 @@ export function getContractDetails(id) {
     url: `/contract/${id}`
   })
 }
+
+// 获取智能床位实时模拟数据
+export function getRealtimeMockData(params?: { floorId?: string | number; roomId?: string | number; bedId?: string | number }) {
+  return request.get({
+    url: '/smartbed/getRealtimeMockData',
+    params
+  })
+}

@@ -27,7 +27,7 @@ import { useRoute } from 'vue-router'
 import { useUserStore } from '@/store'
 
 // 接口
-import { getAllByFloorSmartBed, getFloorBySmartBed } from '@/api/liveIn'
+import { getAllByFloorSmartBed, getFloorBySmartBed, getRealtimeMockData } from '@/api/liveIn'
 // 组件
 // tab切换
 import SwitchBar from './components/SwitchBartop.vue'
@@ -93,10 +93,119 @@ const getList = async () => {
     const res: any = await getAllByFloorSmartBed(floorId.value)
     if (res.code === 200) {
       roomVoList.value = res.data
+
+      // 获取模拟数据并填充到设备中
+      await fetchAndFillMockData(floorId.value)
     }
   } finally {
     dataLoading.value = false
   }
+}
+
+// 获取模拟数据并填充到设备
+const fetchAndFillMockData = async (floorId: string) => {
+  try {
+    const mockRes: any = await getRealtimeMockData({ floorId })
+    if (mockRes.code === 200 && mockRes.data && mockRes.data.length > 0) {
+      // 将模拟数据按 iotId 分组
+      const mockDataMap = new Map()
+      mockRes.data.forEach((mockItem: any) => {
+        mockDataMap.set(mockItem.iotId, mockItem)
+      })
+
+      // 遍历房间列表，填充设备数据
+      roomVoList.value.forEach((room: any) => {
+        // 填充房间级设备数据
+        if (room.deviceVos && room.deviceVos.length > 0) {
+          room.deviceVos.forEach((device: any) => {
+            const mockData = mockDataMap.get(device.iotId)
+            if (mockData) {
+              device.deviceDataVos = convertMockDataToDeviceDataVos(mockData)
+            }
+          })
+        }
+
+        // 填充床位级设备数据
+        if (room.bedVoList && room.bedVoList.length > 0) {
+          room.bedVoList.forEach((bed: any) => {
+            if (bed.deviceVos && bed.deviceVos.length > 0) {
+              bed.deviceVos.forEach((device: any) => {
+                const mockData = mockDataMap.get(device.iotId)
+                if (mockData) {
+                  device.deviceDataVos = convertMockDataToDeviceDataVos(mockData)
+                }
+              })
+            }
+          })
+        }
+      })
+
+      console.log('模拟数据已填充到设备')
+    }
+  } catch (error) {
+    console.error('获取模拟数据失败:', error)
+  }
+}
+
+// 将模拟数据转换为 deviceDataVos 格式
+const convertMockDataToDeviceDataVos = (mockData: any) => {
+  const deviceDataVos = []
+
+  // 心率
+  if (mockData.heartRate !== undefined && mockData.heartRate !== null) {
+    deviceDataVos.push({
+      functionId: 'HeartRate',
+      dataValue: mockData.heartRate.toString(),
+      functionName: '心率'
+    })
+  }
+
+  // 呼吸率
+  if (mockData.respiratoryRate !== undefined && mockData.respiratoryRate !== null) {
+    deviceDataVos.push({
+      functionId: 'RespiratoryRate',
+      dataValue: mockData.respiratoryRate.toString(),
+      functionName: '呼吸率'
+    })
+  }
+
+  // 体温
+  if (mockData.bodyTemperature !== undefined && mockData.bodyTemperature !== null) {
+    deviceDataVos.push({
+      functionId: 'BodyTemperature',
+      dataValue: mockData.bodyTemperature.toString(),
+      functionName: '体温'
+    })
+  }
+
+  // 睡眠状态 (根据在床状态转换: 0-离床, 1-在床)
+  if (mockData.bedStatus !== undefined && mockData.bedStatus !== null) {
+    deviceDataVos.push({
+      functionId: 'shuimianzhuangtai',
+      dataValue: mockData.bedStatus.toString(),
+      functionName: '睡眠状态'
+    })
+  }
+
+  // 离床次数
+  if (mockData.movementCount !== undefined && mockData.movementCount !== null) {
+    deviceDataVos.push({
+      functionId: 'lichuangcishu',
+      dataValue: mockData.movementCount.toString(),
+      functionName: '离床次数'
+    })
+  }
+
+  // 睡眠质量
+  if (mockData.sleepQuality !== undefined && mockData.sleepQuality !== null) {
+    deviceDataVos.push({
+      functionId: 'SleepQuality',
+      dataValue: mockData.sleepQuality.toString(),
+      functionName: '睡眠质量'
+    })
+  }
+
+  return deviceDataVos
 }
 // 获取楼层id
 const getFloorId = (id, i) => {
