@@ -266,10 +266,17 @@ watch(
   (val) => {
     formData.value = val
     if (val.locationType === 0) {
-      formData.value.name = val.elderName
-    } else if (val.deviceDescription !== undefined) {
+      // 随身设备，显示老人名称
+      formData.value.name = val.elderName || val.remark
+      formData.value.elderId = val.bindingLocation
+    } else if (val.locationType === 1 && val.deviceDescription) {
+      // 固定设备，解析楼层房间床位信息
       getStrArr()
       formData.value.localName = value.value
+    } else {
+      // 清空位置相关数据
+      value.value = []
+      formData.value.localName = []
     }
   }
 )
@@ -361,6 +368,10 @@ const outSelect = (e) => {
 }
 // 处理数据value
 const getStrArr = () => {
+  if (!props.data.deviceDescription || props.data.deviceDescription === null) {
+    value.value = []
+    return
+  }
   value.value = props.data.deviceDescription.split(',')
   if (value.value.length === 1) {
     value.value[0] = `f${value.value[0]}`
@@ -376,23 +387,25 @@ const getStrArr = () => {
 // 选择接送类别
 const handleRadio = () => {
   const data = props.data
-  // 如果接入类型选择的是位置，需要把老人的选项内容清掉
+  // 如果接入类型选择的是位置（固定设备），需要把老人的选项内容清掉
   if (formData.value.locationType === 1) {
     // 获取详情要回显的数据
-    if (data.deviceDescription !== undefined) {
+    if (data.deviceDescription) {
       getStrArr()
     } else {
+      value.value = []
       delete formData.value.name
+      delete formData.value.elderId
     }
   }
-  // 反之，接入类型选择的是老人，需要把位置的选项内容清掉
+  // 反之，接入类型选择的是老人（随身设备），需要把位置的选项内容清掉
   if (formData.value.locationType === 0) {
     value.value = []
     formData.value.localName = []
     // 获取详情要回显的数据
-    if (data.remark !== undefined) {
-      formData.value.name = data.elderName
-      formData.value.elderId = data.elderId
+    if (data.elderName || data.remark) {
+      formData.value.name = data.elderName || data.remark
+      formData.value.elderId = data.bindingLocation
     } else {
       delete formData.value.name
       delete formData.value.elderId

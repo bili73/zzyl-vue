@@ -20,7 +20,7 @@
         <!-- end -->
         <!-- 接入位置 -->
         <template #remark="{ row }">
-          {{ getStr(row.remark) }}
+          {{ row.remark ? getStr(row.remark) : '--' }}
         </template>
         <!-- end -->
         <!-- 设备状态 -->
@@ -67,7 +67,7 @@
       </t-table>
       <!-- 分页 -->
       <t-pagination
-        v-if="total > 10"
+        v-if="total > 0"
         v-model="pagination.pageNum"
         v-model:pageSize="pagination.pageSize"
         :total="total"

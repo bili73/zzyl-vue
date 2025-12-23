@@ -374,17 +374,17 @@ export function download(data, typelike, filename) {
 }
 //
 export function getStr(val) {
-  if (val !== undefined) {
-    const arr = val.split(',')
-    if (arr.length === 1) {
-      return arr[0]
-    }
-    if (arr.length === 2) {
-      return `${arr[0]}-${arr[1]}`
-    }
-    return `${arr[0]}-${arr[1]}-${arr[2]}`
+  if (!val || val === null || val === undefined) {
+    return '--'
   }
-  return false
+  const arr = val.split(',')
+  if (arr.length === 1) {
+    return arr[0]
+  }
+  if (arr.length === 2) {
+    return `${arr[0]}-${arr[1]}`
+  }
+  return `${arr[0]}-${arr[1]}-${arr[2]}`
 }
 // 手机中间4位为星号
 export function phoneStar(val) {

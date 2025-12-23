@@ -137,23 +137,38 @@ onMounted(() => {
 
 // 获取产品列表
 const getProduct = async () => {
-  const res: any = await getProductList()
-  if (res.code === 200) {
-    productData.value = res.data
-    console.log(productData.value)
-    // pagination.value.productKey = productData.value[0].productKey
-    getList()
+  dataLoading.value = true
+  try {
+    const res: any = await getProductList()
+    if (res.code === 200) {
+      productData.value = res.data
+      console.log(productData.value)
+      // pagination.value.productKey = productData.value[0].productKey
+      getList()
+    } else {
+      MessagePlugin.error(res.message || '获取产品列表失败')
+      getList() // 即使产品列表获取失败，也尝试获取设备列表
+    }
+  } catch (error) {
+    console.error('获取产品列表异常:', error)
+    MessagePlugin.error('获取产品列表失败，请检查网络连接')
+    getList() // 即使产品列表获取失败，也尝试获取设备列表
+  } finally {
+    dataLoading.value = false
   }
 }
 // 获取老人列表数据
 const getOldList = async () => {
+  console.log('=== getOldList 被调用，请求参数 ===', paginationOld.value)
   const res: any = await getSelectPageQuery(paginationOld.value) // 获取列表数据
+  console.log('=== getOldList API 返回 ===', res)
   if (res.code === 200) {
     listOldManData.value = res.data.records
     listOldManData.value.forEach((ele) => {
       ele.elderId = ele.id
     })
     paginationOld.value.total = Number(res.data.total)
+    console.log('=== listOldManData ===', listOldManData.value)
   }
 }
 // 获取楼层，房间床位
@@ -179,17 +194,26 @@ const getAllFloorList = async () => {
 }
 // 获取列表数据
 const getList = async () => {
-  dataLoading.value = true
+  // 如果还没有开始加载，则设置loading状态
+  if (!dataLoading.value) {
+    dataLoading.value = true
+  }
   try {
+    console.log('=== 获取设备列表，请求参数 ===', pagination.value)
     const res: any = await getDeviceList(pagination.value) // 获取列表数据
+    console.log('=== 获取设备列表，API返回 ===', res)
     if (res.data !== undefined) {
       listData.value = res.data.records
       total.value = Number(res.data.total)
-      dataLoading.value = false
+      console.log('=== listData ===', listData.value)
+      console.log('=== total ===', total.value)
     } else {
       listData.value = []
       total.value = 0
     }
+  } catch (error) {
+    console.error('获取设备列表异常:', error)
+    MessagePlugin.error('获取设备列表失败，请检查网络连接')
   } finally {
     dataLoading.value = false
   }
@@ -222,22 +246,48 @@ const getDetails = async () => {
 }
 // 添加
 const handleAdd = async (val) => {
-  const res: any = await addDevice(val)
-  if (res.code === 200) {
-    MessagePlugin.success('添加成功')
-    handleDialogClose()
-    setTime()
-    formRef.value.handleClear()
+  try {
+    console.log('=== 开始添加设备 ===')
+    console.log('添加设备参数:', val)
+
+    const res: any = await addDevice(val)
+    console.log('添加设备API响应:', res)
+
+    if (res.code === 200) {
+      MessagePlugin.success('添加成功')
+      handleDialogClose()
+      setTime()
+      formRef.value.handleClear()
+    } else {
+      console.error('添加设备失败:', res.message)
+      MessagePlugin.error(res.message || '添加失败')
+    }
+  } catch (error) {
+    console.error('添加设备异常:', error)
+    MessagePlugin.error('添加设备失败，请检查网络连接或联系管理员')
   }
 }
 // 编辑
 const handleEditForm = async (val) => {
-  const res: any = await editDevice(val)
-  if (res.code === 200) {
-    MessagePlugin.success('编辑成功')
-    handleDialogClose()
-    setTime()
-    formRef.value.handleClear()
+  try {
+    console.log('=== 开始编辑设备 ===')
+    console.log('编辑设备参数:', val)
+
+    const res: any = await editDevice(val)
+    console.log('编辑设备API响应:', res)
+
+    if (res.code === 200) {
+      MessagePlugin.success('编辑成功')
+      handleDialogClose()
+      setTime()
+      formRef.value.handleClear()
+    } else {
+      console.error('编辑设备失败:', res.message)
+      MessagePlugin.error(res.message || '编辑失败')
+    }
+  } catch (error) {
+    console.error('编辑设备异常:', error)
+    MessagePlugin.error('编辑设备失败，请检查网络连接或联系管理员')
   }
 }
 
@@ -364,6 +414,7 @@ const getOldCurrent = (val) => {
 }
 // 打开老人弹层
 const handleOpenDialog = (val) => {
+  console.log('=== handleOpenDialog 被调用 ===', val)
   // 打开弹层前判断是否有选择得老人，如果是undefined，老人不提示回显
   if (val.name === undefined) {
     formBaseData.value.elderId = undefined
@@ -371,6 +422,7 @@ const handleOpenDialog = (val) => {
     formBaseData.value.elderId = val.elderId
   }
   dialogOldVisible.value = true
+  console.log('=== dialogOldVisible 设置为 true ===')
   getOldList()
 }
 // 关闭普通列表弹层
@@ -405,19 +457,24 @@ const handleClear = (v) => {
 // 同步数据
 const handleUpdate = async () => {
   dataLoading.value = true
-  await updateProductList().then((res) => {
+  try {
+    const res: any = await updateProductList()
     if (res.code === 200) {
       pagination.value = {
         pageSize: 10,
         pageNum: 1
       }
-      dataLoading.value = false
       getList()
       MessagePlugin.success('同步数据成功')
     } else {
-      MessagePlugin.error('同步数据失败')
+      MessagePlugin.error(res.message || '同步数据失败')
     }
-  })
+  } catch (error) {
+    console.error('同步数据异常:', error)
+    MessagePlugin.error('同步数据失败，请检查网络连接')
+  } finally {
+    dataLoading.value = false
+  }
 }
 </script>
 <style lang="less" scoped src="./../index.less"></style>
