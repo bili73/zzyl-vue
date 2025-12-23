@@ -40,7 +40,7 @@
           <div class="operateCon">
             <a
               class="font-bt"
-              :class="row.status === '1' ? 'disabled' : ''"
+              :class="row.status === 1 ? 'disabled' : ''"
               @click="handleOpen(row)"
               >处理</a
             >
@@ -101,8 +101,11 @@ const rowKey = 'index'
 const emit = defineEmits(['handleOpen', 'getCurrent', 'handleCancelOpen'])
 // 打开操作弹窗
 const handleOpen = (val) => {
-  if (val.status === '0') {
+  console.log('handleOpen clicked, status:', val.status, 'row:', val)
+  if (val.status === 0) {
     emit('handleOpen', val)
+  } else {
+    console.log('该记录已处理，无法重复处理')
   }
 }
 // 点击翻页

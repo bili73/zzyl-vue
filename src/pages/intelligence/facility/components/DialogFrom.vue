@@ -20,16 +20,6 @@
             @reset="onClickCloseBtn"
             @submit="onSubmit"
           >
-            <t-form-item label="处理时间：" name="processingTime">
-              <t-date-picker
-                v-model="formData.processingTime"
-                placeholder="请选择"
-                enable-time-picker
-                allow-input
-                clearable
-                class="wt-400"
-              />
-            </t-form-item>
             <t-form-item label="处理结果：" name="processingResult"
               ><t-textarea
                 v-model="formData.processingResult"
@@ -76,14 +66,6 @@ const formData = ref<Object | any>({})
 
 // 表单校验
 const rules = {
-  processingTime: [
-    {
-      required: true,
-      message: '处理时间为空，请选择处理时间',
-      type: 'error',
-      trigger: 'change'
-    }
-  ],
   processingResult: [
     {
       required: true,
@@ -96,8 +78,8 @@ const rules = {
 // 监听器，监听父级传递的visible值，控制弹窗显示隐藏
 watch(
   () => props.visible,
-  () => {
-    formVisible.value = props.visible
+  (newVal) => {
+    formVisible.value = newVal
   }
 )
 // -----定义方法------

@@ -44,6 +44,7 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import { useRouter, useRoute } from 'vue-router'
 import { tabStatusData } from '@/utils/commonData'
 import { getStartTimeStr, getEndTimeStr } from '@/utils/date'
+import { useUserStore } from '@/store'
 // 接口
 import { getDeviceDataList, deviceUpdate } from '@/api/intelligence'
 import SwitchBar from '@/components/switchBar/switchBar.vue'
@@ -54,6 +55,7 @@ import SearchFormBox from './components/SearchForm.vue'
 // 表单
 import DialogFrom from './components/DialogFrom.vue'
 // ------定义变量------
+const userStore = useUserStore() // 用户信息
 const route = useRoute() // 获取局部
 const listData = ref([]) // 列表数据
 const dataLoading = ref(false) // 加载中
@@ -92,7 +94,15 @@ const getList = async () => {
 // 处理
 // 处理结果提交
 const handleSub = async (val) => {
-  const res: any = await deviceUpdate(val, disposeId.value)
+  console.log('提交处理结果，val:', val)
+  const params = {
+    processingResult: val.processingResult,
+    processorId: userStore.userInfo.id,
+    processorName: userStore.userInfo.realName
+  }
+  console.log('发送的参数:', params)
+  const res: any = await deviceUpdate(params, disposeId.value)
+  console.log('后端返回:', res)
   if (res.code === 200) {
     MessagePlugin.success('操作成功')
     handleClose()
@@ -127,8 +137,10 @@ const getCurrent = (val) => {
 }
 // 打开处理结果弹层
 const handleOpen = (val) => {
+  console.log('父组件 handleOpen 被调用，val:', val)
   disposeId.value = val.id
   visible.value = true
+  console.log('visible 设置为:', visible.value, 'disposeId:', disposeId.value)
 }
 // 关闭处理结果弹层
 const handleClose = () => {

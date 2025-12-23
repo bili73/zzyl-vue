@@ -139,7 +139,6 @@ export function getDeviceDataList(params) {
 // 处理报警
 export function deviceUpdate(params, id) {
   return request.put({
-    url: `/alert-data/handleAlertData/${id}`,
-    params
+    url: `/alert-data/handleAlertData/${id}?processingResult=${params.processingResult}&processorId=${params.processorId}&processorName=${params.processorName}`
   })
 }
