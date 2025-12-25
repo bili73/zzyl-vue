@@ -151,6 +151,7 @@ const fetchAndFillMockData = async (floorId: string) => {
 const convertMockDataToDeviceDataVos = (mockData: any) => {
   const deviceDataVos = []
 
+  // ========== 健康数据（用于床位设备） ==========
   // 心率
   if (mockData.heartRate !== undefined && mockData.heartRate !== null) {
     deviceDataVos.push({
@@ -202,6 +203,61 @@ const convertMockDataToDeviceDataVos = (mockData: any) => {
       functionId: 'SleepQuality',
       dataValue: mockData.sleepQuality.toString(),
       functionName: '睡眠质量'
+    })
+  }
+
+  // ========== 环境数据（用于房间设备） ==========
+  // 室内温度
+  if (mockData.indoorTemperature !== undefined && mockData.indoorTemperature !== null) {
+    deviceDataVos.push({
+      functionId: 'IndoorTemperature',
+      dataValue: mockData.indoorTemperature.toString(),
+      functionName: '温度'
+    })
+  }
+
+  // 当前湿度
+  if (mockData.currentHumidity !== undefined && mockData.currentHumidity !== null) {
+    deviceDataVos.push({
+      functionId: 'CurrentHumidity',
+      dataValue: mockData.currentHumidity.toString(),
+      functionName: '湿度'
+    })
+  }
+
+  // 烟雾传感器状态
+  if (mockData.smokeSensorState !== undefined && mockData.smokeSensorState !== null) {
+    deviceDataVos.push({
+      functionId: 'SmokeSensorState',
+      dataValue: mockData.smokeSensorState.toString(),
+      functionName: '报警状态'
+    })
+  }
+
+  // 门磁状态
+  if (mockData.doorMagnetState !== undefined && mockData.doorMagnetState !== null) {
+    deviceDataVos.push({
+      functionId: 'DoorMagnetState',
+      dataValue: mockData.doorMagnetState.toString(),
+      functionName: '门磁状态'
+    })
+  }
+
+  // 自动门工作状态
+  if (mockData.autoDoorState !== undefined && mockData.autoDoorState !== null) {
+    deviceDataVos.push({
+      functionId: 'zidongmengongzuozhuangtai',
+      dataValue: mockData.autoDoorState.toString(),
+      functionName: '房间状态'
+    })
+  }
+
+  // 滞留状态
+  if (mockData.stayState !== undefined && mockData.stayState !== null) {
+    deviceDataVos.push({
+      functionId: 'StayState',
+      dataValue: mockData.stayState.toString(),
+      functionName: '滞留状态'
     })
   }
 

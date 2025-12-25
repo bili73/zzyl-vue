@@ -206,12 +206,47 @@ import {
   sleepStatus,
   productIconList,
   wuDataList,
+  roomWuDataList,
+  bedWuDataList,
   roomStatus,
   baoJingStatus
 } from '../constants'
 import { useUserStore } from '@/store'
 import NoData from '@/components/noData/index.vue' // 无数据提示组件
+
 // ------定义变量------
+// 开发模式：启用模拟数据（生产环境请设置为 false）
+const ENABLE_MOCK_DATA = true
+
+// 获取模拟的房间物模型数据
+const getMockRoomWuData = () => {
+  return [
+    {
+      functionId: 'zidongmengongzuozhuangtai',
+      label: '房间状态：',
+      unit: '',
+      dataValue: '1' // 1:开启, 0:关闭
+    },
+    {
+      functionId: 'CurrentHumidity',
+      label: '湿度：',
+      unit: '%',
+      dataValue: '65'
+    },
+    {
+      functionId: 'IndoorTemperature',
+      label: '温度：',
+      unit: '℃',
+      dataValue: '24.5'
+    },
+    {
+      functionId: 'SmokeSensorState',
+      label: '报警状态：',
+      unit: '',
+      dataValue: '0' // 0:正常, 1:异常
+    }
+  ]
+}
 
 // 获取父组件值、方法
 const props = defineProps({
@@ -228,7 +263,8 @@ const props = defineProps({
   }
 })
 const userStore = useUserStore()
-// 获取当前房间对应的物模型数据
+
+// 获取当前房间对应的物模型数据（仅房间级：门磁、温湿度）
 const getRoomWuData = (item) => {
   const wuList = []
   if (item && item.deviceVos && item.deviceVos.length) {
@@ -240,8 +276,31 @@ const getRoomWuData = (item) => {
       }
     })
   }
-  // console.log(wuList, 'wuList')
-  return getSameRoomData(wuDataList, wuList)
+
+  // 使用 roomWuDataList 过滤，只显示房间级物模型
+  const filteredData = getSameRoomData(roomWuDataList, wuList)
+
+  // 如果没有真实数据且开启了模拟数据模式，则返回模拟数据
+  if (filteredData.length === 0 && ENABLE_MOCK_DATA) {
+    return getMockRoomWuData()
+  }
+
+  return filteredData
+}
+// 获取当前床位对应的物模型数据（床位级：心率、呼吸率等）
+const getBedWuData = (item) => {
+  const wuList = []
+  if (item && item.deviceVos && item.deviceVos.length) {
+    item.deviceVos.forEach((item1) => {
+      if (item1.deviceDataVos) {
+        wuList.push(...item1.deviceDataVos)
+      } else {
+        return []
+      }
+    })
+  }
+  // 使用 bedWuDataList 过滤，只显示床位级物模型
+  return getSameRoomData(bedWuDataList, wuList)
 }
 // 根据物模型的key返回对应的文字状态值
 const getWuKdyVal = (item) => {
@@ -281,12 +340,12 @@ const getSameRoomData = (array1, array2) => {
 // 根据睡眠状态获取对应的心率或者离床次数物模型
 const getWuDataBySleepStatus = (item) => {
   // console.log(item, 'item')
-  const obj = getRoomWuData(item).filter(
+  const obj = getBedWuData(item).filter(
     (item) => item.functionId === 'shuimianzhuangtai'
   )
   // console.log(obj, '心率')
   if (obj.length) {
-    const arr = getRoomWuData(item).filter(
+    const arr = getBedWuData(item).filter(
       (item) =>
         item.functionId ===
         (obj[0].dataValue === '2' ? 'lichuangcishu' : 'HeartRate')
@@ -296,12 +355,12 @@ const getWuDataBySleepStatus = (item) => {
 }
 // 根据睡眠状态获取对应的呼吸率或者离床时间物模型
 const getWuDataBySleepStatus1 = (item) => {
-  const obj = getRoomWuData(item).filter(
+  const obj = getBedWuData(item).filter(
     (item) => item.functionId === 'shuimianzhuangtai'
   )
 
   if (obj.length) {
-    const arr = getRoomWuData(item).filter(
+    const arr = getBedWuData(item).filter(
       (item) =>
         item.functionId ===
         (obj[0].dataValue === '2' ? 'lichuagnshijian' : 'RespiratoryRate')
@@ -313,7 +372,7 @@ const getWuDataBySleepStatus1 = (item) => {
 }
 // 获取睡眠状态对应的图片
 const getSleepStatusImg = (item) => {
-  const obj = getRoomWuData(item).filter(
+  const obj = getBedWuData(item).filter(
     (item) => item.functionId === 'shuimianzhuangtai'
   )
   if (obj[0]) {
@@ -322,7 +381,7 @@ const getSleepStatusImg = (item) => {
 }
 // 获取睡眠状态对应的文案
 const getSleepStatusText = (item) => {
-  const obj = getRoomWuData(item).filter(
+  const obj = getBedWuData(item).filter(
     (item) => item.functionId === 'shuimianzhuangtai'
   )
   if (obj[0]) {
