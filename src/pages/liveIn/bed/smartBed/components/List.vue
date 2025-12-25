@@ -113,65 +113,24 @@
                         }}</text>
                       </div>
                       <div class="right">
-                        <div class="top">
+                        <!-- 显示所有床位级物模型数据 -->
+                        <div
+                          v-for="(wuData, idx) in getBedWuData(item)"
+                          :key="idx"
+                          class="data-item"
+                        >
                           <img
-                            :src="
-                              getWuDataBySleepStatus(item)
-                                ? getWuDataBySleepStatus(item).src
-                                : ''
-                            "
+                            v-if="wuData.value !== 'lichuangcishu'"
+                            :src="wuData.src || ''"
+                            :style="{ opacity: wuData.src ? 1 : 0 }"
                           />
-                          <div class="label">
-                            {{
-                              getWuDataBySleepStatus(item)
-                                ? getWuDataBySleepStatus(item).label
-                                : ''
-                            }}
-                          </div>
-                          <div class="val">
-                            {{
-                              getWuDataBySleepStatus(item)
-                                ? getWuDataBySleepStatus(item).dataValue
-                                : ''
-                            }}
-                          </div>
-                          <div class="unit">
-                            {{
-                              getWuDataBySleepStatus(item)
-                                ? getWuDataBySleepStatus(item).unit
-                                : ''
-                            }}
-                          </div>
-                        </div>
-                        <div class="bottom">
-                          <img
-                            :src="
-                              getWuDataBySleepStatus1(item)
-                                ? getWuDataBySleepStatus1(item).src
-                                : ''
-                            "
-                          />
-                          <div class="label">
-                            {{
-                              getWuDataBySleepStatus1(item)
-                                ? getWuDataBySleepStatus1(item).label
-                                : ''
-                            }}
-                          </div>
-                          <div class="val">
-                            {{
-                              getWuDataBySleepStatus1(item)
-                                ? getWuDataBySleepStatus1(item).dataValue
-                                : ''
-                            }}
-                          </div>
-                          <div class="unit">
-                            {{
-                              getWuDataBySleepStatus1(item)
-                                ? getWuDataBySleepStatus1(item).unit
-                                : ''
-                            }}
-                          </div>
+                          <div
+                            v-else
+                            class="img-placeholder"
+                          ></div>
+                          <div class="label">{{ wuData.label }}</div>
+                          <div class="val">{{ wuData.dataValue }}</div>
+                          <div class="unit">{{ wuData.unit }}</div>
                         </div>
                       </div>
                     </div>
@@ -215,39 +174,6 @@ import { useUserStore } from '@/store'
 import NoData from '@/components/noData/index.vue' // 无数据提示组件
 
 // ------定义变量------
-// 开发模式：启用模拟数据（生产环境请设置为 false）
-const ENABLE_MOCK_DATA = true
-
-// 获取模拟的房间物模型数据
-const getMockRoomWuData = () => {
-  return [
-    {
-      functionId: 'zidongmengongzuozhuangtai',
-      label: '房间状态：',
-      unit: '',
-      dataValue: '1' // 1:开启, 0:关闭
-    },
-    {
-      functionId: 'CurrentHumidity',
-      label: '湿度：',
-      unit: '%',
-      dataValue: '65'
-    },
-    {
-      functionId: 'IndoorTemperature',
-      label: '温度：',
-      unit: '℃',
-      dataValue: '24.5'
-    },
-    {
-      functionId: 'SmokeSensorState',
-      label: '报警状态：',
-      unit: '',
-      dataValue: '0' // 0:正常, 1:异常
-    }
-  ]
-}
-
 // 获取父组件值、方法
 const props = defineProps({
   //  基础列表数据
@@ -279,11 +205,6 @@ const getRoomWuData = (item) => {
 
   // 使用 roomWuDataList 过滤，只显示房间级物模型
   const filteredData = getSameRoomData(roomWuDataList, wuList)
-
-  // 如果没有真实数据且开启了模拟数据模式，则返回模拟数据
-  if (filteredData.length === 0 && ENABLE_MOCK_DATA) {
-    return getMockRoomWuData()
-  }
 
   return filteredData
 }
@@ -498,32 +419,47 @@ watch(
             .right {
               display: flex;
               flex-direction: column;
-              justify-content: space-between;
+              gap: 6px;
               position: relative;
               bottom: 7px;
-              .top,
-              .bottom {
+
+              .data-item {
                 display: flex;
                 align-items: center;
+                gap: 5px;
+
                 img {
-                  width: 40px;
-                  height: 40px;
-                  margin-right: 5px;
+                  width: 32px;
+                  height: 32px;
+                  margin-right: 3px;
+                  flex-shrink: 0;
                 }
+
+                .img-placeholder {
+                  width: 32px;
+                  height: 32px;
+                  margin-right: 3px;
+                  flex-shrink: 0;
+                }
+
                 .label {
-                  min-width: 56px;
+                  min-width: 70px;
+                  font-size: 13px;
+                  color: #595959;
                   white-space: nowrap;
                 }
-                .label,
-                .unit {
-                  font-size: 14px;
-                  color: #595959;
-                }
+
                 .val {
-                  font-size: 24px;
+                  font-size: 20px;
                   color: #262626;
                   font-weight: bold;
-                  margin-right: 6px;
+                  margin-right: 4px;
+                  min-width: 40px;
+                }
+
+                .unit {
+                  font-size: 13px;
+                  color: #595959;
                 }
               }
             }

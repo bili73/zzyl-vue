@@ -105,11 +105,14 @@ const getList = async () => {
 // 获取模拟数据并填充到设备
 const fetchAndFillMockData = async (floorId: string) => {
   try {
+    console.log('开始获取模拟数据，floorId:', floorId)
     const mockRes: any = await getRealtimeMockData({ floorId })
+    console.log('模拟数据接口返回:', mockRes)
     if (mockRes.code === 200 && mockRes.data && mockRes.data.length > 0) {
       // 将模拟数据按 iotId 分组
       const mockDataMap = new Map()
       mockRes.data.forEach((mockItem: any) => {
+        console.log('模拟数据项:', mockItem.iotId, mockItem)
         mockDataMap.set(mockItem.iotId, mockItem)
       })
 
