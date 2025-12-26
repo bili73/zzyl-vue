@@ -114,7 +114,7 @@ const emit: Function = defineEmits([
 ])
 const form = ref(null)
 onMounted(async () => {
-  const res: any = await getAllUserList({ deptNo: '100001005000000' })
+  const res: any = await getAllUserList({ deptNo: '100001005001000' })
   nurseList.value = res.data
 })
 // 重置表单

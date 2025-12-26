@@ -106,7 +106,7 @@ const handleSubmit = async (val) => {
 }
 // 获取护理员下拉数据
 const getAllUserListFunc = async () => {
-  const res: any = await getAllUserList({ deptNo: '100001005000000' })
+  const res: any = await getAllUserList({ deptNo: '100001005001000' })
   nurseList.value = res.data.map((item) => {
     return { value: item.id, label: item.realName }
   })
