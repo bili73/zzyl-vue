@@ -40,7 +40,7 @@
           <div class="operateCon">
             <a
               class="font-bt"
-              :class="row.status === 1 ? 'disabled' : ''"
+              :class="row.status !== 0 ? 'disabled' : ''"
               @click="handleOpen(row)"
               >处理</a
             >

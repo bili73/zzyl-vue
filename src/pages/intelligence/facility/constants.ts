@@ -70,19 +70,21 @@ export const COLUMNS = [
     // // 添加筛选
     cell: (h, { row }) => {
       const statusList = {
-        1: {
-          label: '已处理'
-        },
         0: {
           label: '待处理'
+        },
+        1: {
+          label: '已处理'
         }
       }
+      // 如果状态不在定义范围内，默认显示未知
+      const statusInfo = statusList[row.status] || { label: '未知' }
       return h(
         'span',
         {
           class: `status-dot status-dot-${row.status}`
         },
-        statusList[row.status].label
+        statusInfo.label
       )
     }
   },

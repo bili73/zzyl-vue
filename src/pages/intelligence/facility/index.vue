@@ -150,6 +150,8 @@ const handleClose = () => {
 const changeId = (val) => {
   activeIndex.value = val
   pagination.value.pageNum = 1
+  // val === 0（待处理）、1（已处理）时设置 status
+  // val === null（全部）时删除 status
   if (val === 0 || val === 1) {
     pagination.value.status = val
   } else {

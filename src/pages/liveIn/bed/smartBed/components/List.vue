@@ -184,7 +184,7 @@ import {
   baoJingStatus
 } from '../constants'
 import { useUserStore } from '@/store'
-import { deviceOpenDoor } from '@/api/intelligence'
+import { deviceOpenDoor, deviceCloseDoor } from '@/api/intelligence'
 import NoData from '@/components/noData/index.vue' // 无数据提示组件
 
 // ------定义变量------
@@ -209,11 +209,32 @@ const emit = defineEmits(['refresh'])
 const userStore = useUserStore()
 
 /**
- * 处理智能门锁开门操作
+ * 处理智能门锁开门/关门操作
  * @param roomItem 房间数据
  */
 const handleDoorControl = async (roomItem) => {
   try {
+    // 查找房间中的门锁状态数据（functionId='zidongmengongzuozhuangtai'）
+    const doorStatusData = getRoomWuData(roomItem).find(
+      (item) => item.functionId === 'zidongmengongzuozhuangtai'
+    )
+
+    if (!doorStatusData) {
+      MessagePlugin.warning('未找到门锁状态数据')
+      return
+    }
+
+    // 获取当前门锁状态：0=开启, 1=关闭（根据roomStatus数组定义）
+    const currentStatus = Number(doorStatusData.dataValue)
+    // isOpen=true 表示门锁是"开启"状态（dataValue=0），此时应该执行关门操作
+    const isOpen = currentStatus === 0
+
+    console.log('=== 门锁控制调试信息 ===')
+    console.log('门锁状态原始值:', doorStatusData.dataValue, '类型:', typeof doorStatusData.dataValue)
+    console.log('转换后的状态值:', currentStatus, '类型:', typeof currentStatus)
+    console.log('isOpen 判断（true=当前状态为开启，需要关门）:', isOpen)
+    console.log('将要执行的操作:', isOpen ? '关门' : '开门')
+
     // 查找房间中的智能门锁设备（产品名称包含"门禁"、"自动门"、"门锁"等）
     const doorLockDevice = roomItem.deviceVos?.find((device) =>
       device.productName?.includes('门禁') ||
@@ -232,18 +253,22 @@ const handleDoorControl = async (roomItem) => {
       return
     }
 
-    // 调用开门API
-    const res: any = await deviceOpenDoor(doorLockDevice.iotId)
+    // 根据当前门锁状态调用开门或关门API
+    const res: any = isOpen
+      ? await deviceCloseDoor(doorLockDevice.iotId)
+      : await deviceOpenDoor(doorLockDevice.iotId)
+
     if (res.code === 200) {
-      MessagePlugin.success('开门成功')
+      const actionText = isOpen ? '关门' : '开门'
+      MessagePlugin.success(`${actionText}成功`)
       // 触发父组件刷新数据
       emit('refresh')
     } else {
-      MessagePlugin.error(res.msg || '开门失败')
+      MessagePlugin.error(res.msg || (isOpen ? '关门失败' : '开门失败'))
     }
   } catch (error) {
-    console.error('开门操作失败:', error)
-    MessagePlugin.error('开门操作失败')
+    console.error('门锁操作失败:', error)
+    MessagePlugin.error('门锁操作失败')
   }
 }
 

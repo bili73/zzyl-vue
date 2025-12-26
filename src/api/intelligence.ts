@@ -76,6 +76,12 @@ export function deviceOpenDoor(id) {
     url: `/iot/deviceOpenDoor/${id}`
   })
 }
+// 门禁相关设备执行关门命令
+export function deviceCloseDoor(id) {
+  return request.post({
+    url: `/iot/deviceCloseDoor/${id}`
+  })
+}
 // 从物联网平台同步产品列表
 export function updateProductList() {
   return request.post({
