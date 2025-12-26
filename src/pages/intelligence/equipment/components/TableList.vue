@@ -52,9 +52,9 @@
             <a class="font-bt" @click="handleLook(row)">查看</a>
             <a
               class="font-bt"
-              :class="row.haveEntranceGuard === 0 ? 'disabled' : ''"
+              :class="!isDoorDevice(row) ? 'disabled' : ''"
               @click="handleOpen(row)"
-              >开门</a
+            >{{ isDoorDevice(row) ? '开门' : '非门禁' }}</a
             >
           </div>
         </template>
@@ -149,15 +149,51 @@ const handleLook = (val) => {
     query: { iotId: val.iotId, productKey: val.productKey }
   })
 }
+
+/**
+ * 判断设备是否为门禁设备
+ * @param row 设备数据
+ * @returns true=门禁设备, false=非门禁设备
+ */
+const isDoorDevice = (row) => {
+  // 1. 检查haveEntranceGuard字段
+  if (row.haveEntranceGuard === 1) {
+    return true
+  }
+
+  // 2. 检查产品名称是否包含门禁相关关键词
+  const productName = row.productName || ''
+  if (productName && typeof productName === 'string') {
+    const lowerProductName = productName.toLowerCase()
+    if (lowerProductName.includes('门禁') ||
+        lowerProductName.includes('自动门') ||
+        lowerProductName.includes('门锁') ||
+        lowerProductName.includes('智能门')) {
+      return true
+    }
+  }
+
+  return false
+}
+
 // 开门
 const handleOpen = async (val) => {
-  if (val.haveEntranceGuard === 1) {
-    await deviceOpenDoor(val.iotId).then((res) => {
-      if (res.code === 200) {
-        MessagePlugin.success('开门成功')
-        emit('getList')
-      }
-    })
+  if (!isDoorDevice(val)) {
+    MessagePlugin.warning('该设备不是门禁设备，无法执行开门操作')
+    return
+  }
+
+  try {
+    const res = await deviceOpenDoor(val.iotId)
+    if (res.code === 200) {
+      MessagePlugin.success('开门成功')
+      emit('getList')
+    } else {
+      MessagePlugin.error(res.msg || '开门失败')
+    }
+  } catch (error) {
+    console.error('开门操作失败:', error)
+    MessagePlugin.error('开门操作失败')
   }
 }
 // 点击翻页

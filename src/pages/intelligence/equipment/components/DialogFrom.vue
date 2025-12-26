@@ -73,6 +73,12 @@
                 >
               </t-radio-group>
             </t-form-item>
+            <t-form-item label="门禁设备：" name="haveEntranceGuard">
+              <t-radio-group v-model="formData.haveEntranceGuard">
+                <t-radio :value="1">是</t-radio>
+                <t-radio :value="0">否</t-radio>
+              </t-radio-group>
+            </t-form-item>
             <t-form-item
               v-if="formData.locationType === 0"
               label="接入位置："
@@ -181,7 +187,8 @@ const readonly = ref(false) // 是否只读
 const value = ref([])
 // 表单数据
 const formData = ref<Object | any>({
-  locationType: 0
+  locationType: 0,
+  haveEntranceGuard: 0 // 门禁设备标识：0=否，1=是
 })
 
 // 表单校验
@@ -287,6 +294,27 @@ watch(
     formData.value.elderId = val.elderId
   }
 )
+// 监听器，监听产品选择变化，自动设置门禁标识
+watch(
+  () => formData.value.productKey,
+  (newProductKey) => {
+    if (newProductKey && props.productData.length > 0) {
+      const selectedProduct = props.productData.find(p => p.productKey === newProductKey)
+      if (selectedProduct) {
+        const productName = selectedProduct.productName || ''
+        // 根据产品名称自动判断是否为门禁设备
+        const isDoorDevice = productName.includes('门禁') || productName.includes('自动门') ||
+                            productName.includes('门锁') || productName.includes('智能门')
+        formData.value.haveEntranceGuard = isDoorDevice ? 1 : 0
+        console.log('产品选择变化，自动设置门禁标识:', {
+          productName,
+          isDoorDevice,
+          haveEntranceGuard: formData.value.haveEntranceGuard
+        })
+      }
+    }
+  }
+)
 // -----定义方法------
 // 提交表单
 const onSubmit = (result: ValidateResultContext<FormData>) => {
@@ -297,6 +325,7 @@ const onSubmit = (result: ValidateResultContext<FormData>) => {
       locationType: data.locationType,
       nickname: data.nickname,
       productKey: data.productKey,
+      haveEntranceGuard: data.haveEntranceGuard, // 门禁设备标识
       registerDeviceRequest: {
         deviceName: data.deviceName,
         nickname: data.nickname,
@@ -347,6 +376,7 @@ const handleClear = () => {
   delete formData.value.elderId
   delete formData.value.elderName
   formData.value.locationType = 0
+  formData.value.haveEntranceGuard = 0 // 重置门禁标识
 }
 // 点击取消关闭
 const onClickCloseBtn = () => {

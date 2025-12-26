@@ -36,7 +36,19 @@
               class="wuDataItem"
             >
               <span class="label">{{ item.label }}</span>
-              <span class="wuDataVal">{{ getWuKdyVal(item) }}</span>
+              <span
+                v-if="item.functionId === 'zidongmengongzuozhuangtai'"
+                class="wuDataVal door-control"
+                :class="{
+                  'door-open': getWuKdyVal(item) === '开启',
+                  'door-closed': getWuKdyVal(item) === '关闭'
+                }"
+                @click="handleDoorControl(roomItem)"
+              >
+                <span class="door-icon">{{ getWuKdyVal(item) }}</span>
+                <span class="door-hint">点击{{ getWuKdyVal(item) === '开启' ? '关门' : '开门' }}</span>
+              </span>
+              <span v-else class="wuDataVal">{{ getWuKdyVal(item) }}</span>
               <span class="unit">{{ item.unit }}</span>
             </div>
           </div>
@@ -161,6 +173,7 @@
 </template>
 <script setup lang="ts">
 import { watch } from 'vue'
+import { MessagePlugin } from 'tdesign-vue-next'
 import {
   sleepStatus,
   productIconList,
@@ -171,6 +184,7 @@ import {
   baoJingStatus
 } from '../constants'
 import { useUserStore } from '@/store'
+import { deviceOpenDoor } from '@/api/intelligence'
 import NoData from '@/components/noData/index.vue' // 无数据提示组件
 
 // ------定义变量------
@@ -188,7 +202,50 @@ const props = defineProps({
     type: String
   }
 })
+
+// 定义emits
+const emit = defineEmits(['refresh'])
+
 const userStore = useUserStore()
+
+/**
+ * 处理智能门锁开门操作
+ * @param roomItem 房间数据
+ */
+const handleDoorControl = async (roomItem) => {
+  try {
+    // 查找房间中的智能门锁设备（产品名称包含"门禁"、"自动门"、"门锁"等）
+    const doorLockDevice = roomItem.deviceVos?.find((device) =>
+      device.productName?.includes('门禁') ||
+      device.productName?.includes('自动门') ||
+      device.productName?.includes('门锁') ||
+      device.productName?.includes('智能门')
+    )
+
+    if (!doorLockDevice) {
+      MessagePlugin.warning('当前房间未绑定智能门锁设备')
+      return
+    }
+
+    if (!doorLockDevice.iotId) {
+      MessagePlugin.error('设备IoT ID不存在')
+      return
+    }
+
+    // 调用开门API
+    const res: any = await deviceOpenDoor(doorLockDevice.iotId)
+    if (res.code === 200) {
+      MessagePlugin.success('开门成功')
+      // 触发父组件刷新数据
+      emit('refresh')
+    } else {
+      MessagePlugin.error(res.msg || '开门失败')
+    }
+  } catch (error) {
+    console.error('开门操作失败:', error)
+    MessagePlugin.error('开门操作失败')
+  }
+}
 
 // 获取当前房间对应的物模型数据（仅房间级：门磁、温湿度）
 const getRoomWuData = (item) => {
@@ -226,7 +283,10 @@ const getBedWuData = (item) => {
 // 根据物模型的key返回对应的文字状态值
 const getWuKdyVal = (item) => {
   if (item.functionId === 'zidongmengongzuozhuangtai') {
-    return roomStatus[Number(item.dataValue)]
+    // 门锁状态：0=关闭, 1=开启
+    const statusValue = Number(item.dataValue)
+    const statusText = roomStatus[statusValue]
+    return statusText || (statusValue === 1 ? '开启' : '关闭')
   }
   if (item.functionId === 'SmokeSensorState') {
     return baoJingStatus[Number(item.dataValue)]
@@ -521,6 +581,54 @@ watch(
         display: flex;
         .wuDataItem {
           margin-right: 20px;
+
+          .door-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+
+            .door-icon {
+              font-weight: 500;
+            }
+
+            .door-hint {
+              font-size: 12px;
+              opacity: 0.8;
+            }
+
+            &.door-open {
+              color: #00a870;
+              background-color: #e7f9f2;
+              border-color: #00a870;
+
+              &:hover {
+                background-color: #d0efea;
+              }
+            }
+
+            &.door-closed {
+              color: #e37318;
+              background-color: #fef2e8;
+              border-color: #e37318;
+
+              &:hover {
+                background-color: #fce5d2;
+              }
+            }
+
+            &:active {
+              transform: scale(0.95);
+            }
+          }
+
+          .wuDataVal:not(.door-control) {
+            color: #262626;
+          }
         }
       }
       .device {
