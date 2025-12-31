@@ -64,16 +64,33 @@ const bedVoData = ref({}) // 床位信息
 const elderVoData = ref({}) // 老人信息
 const memberVoData = ref({}) //
 const nursingProjectVo = ref({}) // 护理项目
-watch(props, (val) => {
-  bedVoData.value = val.data.bedVo
-  elderVoData.value = val.data.elderVo
-  memberVoData.value = val.data.memberVo
-  nursingProjectVo.value = val.data.nursingProjectVo
-})
+// 监听props变化
+watch(() => props.data, (val) => {
+  if (val && val.bedVo) {
+    bedVoData.value = val.bedVo
+  }
+  if (val && val.elderVo) {
+    elderVoData.value = val.elderVo
+  }
+  if (val && val.memberVo) {
+    memberVoData.value = val.memberVo
+  }
+  if (val && val.nursingProjectVo) {
+    nursingProjectVo.value = val.nursingProjectVo
+  }
+}, { immediate: true, deep: true })
 onMounted(() => {
-  bedVoData.value = props.data.bedVo
-  elderVoData.value = props.data.elderVo
-  memberVoData.value = props.data.memberVo
-  nursingProjectVo.value = props.data.nursingProjectVo
+  if (props.data && props.data.bedVo) {
+    bedVoData.value = props.data.bedVo
+  }
+  if (props.data && props.data.elderVo) {
+    elderVoData.value = props.data.elderVo
+  }
+  if (props.data && props.data.memberVo) {
+    memberVoData.value = props.data.memberVo
+  }
+  if (props.data && props.data.nursingProjectVo) {
+    nursingProjectVo.value = props.data.nursingProjectVo
+  }
 })
 </script>

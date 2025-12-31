@@ -80,7 +80,7 @@
             </div>
             <div class="info-item">
               <h1>退款原因：</h1>
-              <span>{{ data.memo }}</span>
+              <span>{{ data.tradingChannel || data.memo }}</span>
             </div>
             <div class="info-item">
               <h1>退款渠道：</h1>

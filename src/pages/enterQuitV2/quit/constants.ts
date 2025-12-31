@@ -9,12 +9,12 @@ export const COLUMNS = [
   {
     title: '老人姓名',
     minWidth: 180,
-    colKey: 'elderName'
+    colKey: 'name'
   },
   {
     title: '老人身份证号',
     minWidth: 210,
-    colKey: 'elderIdCardNo'
+    colKey: 'idCardNo'
   },
   {
     title: '退住日期',

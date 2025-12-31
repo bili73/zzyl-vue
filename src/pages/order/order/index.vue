@@ -173,7 +173,7 @@ const handleRefundSubmit = async (val) => {
       setTimeout(() => {
         isChick.value = false
       }, 3000)
-      handleCancelClose()
+      handleRefundClose()
       refund.value.handleClear()
       getList()
     }
@@ -181,7 +181,7 @@ const handleRefundSubmit = async (val) => {
 }
 // 退款
 const handleRefund = (val) => {
-  orderId.value = val.tradingOrderNo
+  orderId.value = String(val.id)
   visibleRefund.value = true
 }
 // 关闭退款弹层

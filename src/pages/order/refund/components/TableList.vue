@@ -22,7 +22,7 @@
         <!-- end -->
         <!-- 申请人 -->
         <template #creator="{ row }">{{
-          row.creator ? row.creator : row.adminCreator
+          row.createType === 2 ? row.adminCreator : row.creator
         }}</template>
         <!-- end -->
         <!-- 退款时间 -->
@@ -34,6 +34,11 @@
         <template #op="{ row }">
           <div class="operateCon">
             <a class="font-bt" @click="handleOpen(row)">查看</a>
+            <a
+              v-if="row.refundStatus === 1"
+              class="font-bt"
+              @click="handleRefund(row)"
+            >退款</a>
           </div>
         </template>
         <!-- end -->
@@ -90,10 +95,14 @@ const props = defineProps({
 // ------定义变量------
 // 行的key
 const rowKey = 'index'
-const emit = defineEmits(['handleOpen', 'getCurrent'])
+const emit = defineEmits(['handleOpen', 'getCurrent', 'handleRefund'])
 // 打开操作弹窗
 const handleOpen = (val) => {
   emit('handleOpen', val)
+}
+// 处理退款
+const handleRefund = (val) => {
+  emit('handleRefund', val)
 }
 // 点击翻页
 const onPageChange = (pageInfo) => {

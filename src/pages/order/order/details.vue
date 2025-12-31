@@ -160,7 +160,7 @@ onMounted(() => {
 // ------定义方法------
 // // 获取数据
 const getBaseData = async () => {
-  const res: any = await getDetails({ orderId: orderId.value }) // 获取数据
+  const res: any = await getDetails({ id: orderId.value }) // 获取数据
   if (res.code === 200) {
     baseData.value = res.data
     defaultCurrent.value = baseData.value.status

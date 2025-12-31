@@ -100,8 +100,8 @@ export const COLUMNS = [
   {
     align: 'left',
     fixed: 'right',
-    width: 65,
-    minWidth: '65px',
+    width: 130,
+    minWidth: '130px',
     colKey: 'op',
     title: '操作'
   }

@@ -37,7 +37,7 @@
       </div>
       <div class="info-item">
         <h1>退款原因：</h1>
-        <span>{{ data.refundRecordVo.memo }}</span>
+        <span>{{ data.refundRecordVo.tradingChannel || data.refundRecordVo.memo }}</span>
       </div>
       <div class="info-item">
         <h1>退款渠道：</h1>

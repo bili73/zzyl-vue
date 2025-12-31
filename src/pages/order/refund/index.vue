@@ -25,6 +25,7 @@
       :total="total"
       @get-current="getCurrent"
       @handle-open="handleOpen"
+      @handle-refund="handleRefund"
     ></TableList>
     <!-- end -->
     <!-- 新增，编辑弹窗 -->
@@ -41,11 +42,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { MessagePlugin } from 'tdesign-vue-next'
 import { getStartTime, getEndTime } from '@/utils/date'
 // 基本数据
 import { refundStatusData } from '@/utils/commonData'
 // 接口
-import { getRefundList, getRefundDetails } from '@/api/order'
+import { getRefundList, getRefundDetails, orderRefund } from '@/api/order'
 // tab切换
 import SwitchBar from '@/components/switchBar/switchBar.vue'
 // 表格列表
@@ -127,6 +129,23 @@ const handleOpen = (val) => {
 // 关闭退款记录弹层
 const handleClose = () => {
   visible.value = false
+}
+// 处理退款
+const handleRefund = async (val) => {
+  try {
+    const params = {
+      tradingOrderNo: val.productOrderNo,
+      tradingChannel: val.tradingChannel || '管理员操作退款',
+      createType: 2 // 管理员操作
+    }
+    const res: any = await orderRefund(params)
+    if (res.code === 200) {
+      MessagePlugin.success('退款成功')
+      getList() // 刷新列表
+    }
+  } catch (error) {
+    MessagePlugin.error('退款失败')
+  }
 }
 // 获取tab触发的当前值
 const changeId = (val) => {
