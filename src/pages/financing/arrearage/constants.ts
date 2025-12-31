@@ -45,22 +45,42 @@ export const COLUMNS2 = [
   },
   {
     title: '账单编号',
-    minWidth: 200,
+    minWidth: 180,
     colKey: 'billNo'
   },
   {
     title: '账单月份',
-    width: 150,
+    width: 120,
     colKey: 'billMonth'
   },
   {
-    title: '支付截止时间',
-    width: 180,
-    colKey: 'paymentDeadline'
+    title: '账单金额（元）',
+    width: 120,
+    colKey: 'billAmount'
   },
   {
     title: '应付金额（元）',
-    width: 135,
+    width: 120,
     colKey: 'payableAmount'
+  },
+  {
+    title: '护理等级',
+    width: 120,
+    colKey: 'lname'
+  },
+  {
+    title: '房间类型',
+    width: 100,
+    colKey: 'typeName'
+  },
+  {
+    title: '账单状态',
+    width: 100,
+    colKey: 'transactionStatus'
+  },
+  {
+    title: '支付截止时间',
+    width: 160,
+    colKey: 'paymentDeadline'
   }
 ]

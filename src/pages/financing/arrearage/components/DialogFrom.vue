@@ -40,6 +40,22 @@
               }}
             </template>
             <!-- end -->
+            <!-- 账单金额 -->
+            <template #billAmount="{ row }">
+              {{
+                isDecimals(row.billAmount)
+                  ? row.billAmount
+                  : row.billAmount + '.00'
+              }}
+            </template>
+            <!-- end -->
+            <!-- 账单状态 -->
+            <template #transactionStatus="{ row }">
+              <span v-if="row.transactionStatus === 0" class="text-warning">未支付</span>
+              <span v-else-if="row.transactionStatus === 1" class="text-success">已支付</span>
+              <span v-else-if="row.transactionStatus === 2" class="text-info">已关闭</span>
+            </template>
+            <!-- end -->
           </t-table>
         </div>
         <div v-if="showPageTip" class="footInfo">已经到底了~</div>
