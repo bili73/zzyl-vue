@@ -304,58 +304,243 @@ const handleWarnClose = () => {
 // 语音播报/报警异常
 const socket = ref(null)
 const warnData = ref({}) // 报警数据
-const setwebSocket = () => {
-  // const clientId = Math.random().toString(36).substr(2)
-  // const env = import.meta.env.MODE || 'development'
-  console.log(import.meta.env, 'MODE')
-  // socket.value = new WebSocket(`wss://zhyl-admin-t.itheima.net/ws/${clientId}`)
-  socket.value = new WebSocket(
-    `${import.meta.env.VITE_APP_SOCKET_URL}/ws/${userStore.userInfo.id}`
-  )
-  socket.value.onmessage = (event) => {
-    console.log('收到消息:', JSON.parse(event.data))
+const messageNotificationAudio = ref(null) // 消息提示音
+
+/**
+ * WebSocket 消息处理（统一入口）
+ * @param {MessageEvent} event - WebSocket消息事件
+ */
+const handleWebSocketMessage = (event) => {
+  try {
     const res = JSON.parse(event.data)
-    warnData.value = res
+    console.log('收到WebSocket消息:', res)
+
+    // 报警消息（notifyType === 1）
     if (res.notifyType === 1) {
-      // 报警异常
-      if (res.isAllConsumer) {
-        if (res.physicalLocationType === 0) {
-          userStore.setUnusualFloorId(res.deviceDescription?.split(',')[0])
-        } else if (res.physicalLocationType === 2) {
-          userStore.setUnusualBedId(res.deviceDescription?.split(',')[2])
-        }
-      } else {
-        // 添加语音播报/弹层提示
-        // 报警提示弹层
-        visibleWarn.value = true
-        // audioVo.value.load()
-        // 添加语音播报
-        if (res.voiceNotifyStatus === 1) {
-          // 设置语音开启时需要打开语音播放
-          // play是一个promise，因此错误需要在结束以后catch,然后再次调用play函数即可
-          const playPromise = audioVo.value.play()
-          if (playPromise && playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                audioVo.value.play()
-              })
-              .catch((err) => {
-                audioVo.value.play()
-              })
-          }
-        }
-      }
-    } else {
-      // 解除报警异常
-      if (res.physicalLocationType === 0) {
-        return userStore.deleteUnusualFloorId(
-          res.deviceDescription.split(',')[0]
-        )
-      }
-      if (res.physicalLocationType === 2) {
-        return userStore.deleteUnusualBedId(res.deviceDescription.split(',')[2])
-      }
+      handleAlarmMessage(res)
     }
+    // 普通消息通知（notifyType === 2 或其他）
+    else {
+      handleNormalMessageNotification(res)
+    }
+
+    // 统一更新未读消息数量
+    updateUnreadCount()
+  } catch (error) {
+    console.error('WebSocket消息处理错误:', error)
+  }
+}
+
+/**
+ * 处理报警消息
+ * @param {Object} alarmData - 报警数据
+ */
+const handleAlarmMessage = (alarmData) => {
+  warnData.value = alarmData
+
+  // 判断是否是解除报警
+  if (alarmData.notifyType !== 1) {
+    // 解除报警异常
+    if (alarmData.physicalLocationType === 0) {
+      return userStore.deleteUnusualFloorId(
+        alarmData.deviceDescription?.split(',')[0]
+      )
+    }
+    if (alarmData.physicalLocationType === 2) {
+      return userStore.deleteUnusualBedId(
+        alarmData.deviceDescription?.split(',')[2]
+      )
+    }
+  }
+
+  // 处理报警异常
+  if (alarmData.isAllConsumer) {
+    // 全局通知：标记异常楼层或床位
+    if (alarmData.physicalLocationType === 0) {
+      userStore.setUnusualFloorId(alarmData.deviceDescription?.split(',')[0])
+    } else if (alarmData.physicalLocationType === 2) {
+      userStore.setUnusualBedId(alarmData.deviceDescription?.split(',')[2])
+    }
+  } else {
+    // 个人通知：显示弹窗和语音播报
+    visibleWarn.value = true
+
+    // 语音播报
+    if (alarmData.voiceNotifyStatus === 1) {
+      playAlarmAudio()
+    }
+  }
+}
+
+/**
+ * 处理普通消息通知
+ * @param {Object} message - 消息数据
+ */
+const handleNormalMessageNotification = (message) => {
+  // 播放消息提示音
+  playMessageNotificationSound()
+
+  // 更新红点状态
+  userStore.isHaveNews = true
+
+  // 可选：显示简短的Toast提示
+  // MessagePlugin.info({
+  //   content: `您有新的消息：${message.title || '新通知'}`,
+  //   duration: 3000,
+  //   placement: 'top-right'
+  // })
+}
+
+/**
+ * 播放报警语音
+ */
+const playAlarmAudio = () => {
+  if (!audioVo.value) return
+
+  const playPromise = audioVo.value.play()
+  if (playPromise && playPromise !== undefined) {
+    playPromise
+      .then(() => {
+        // 播放成功
+      })
+      .catch((err) => {
+        console.error('报警语音播放失败:', err)
+        // 重试播放
+        audioVo.value.play().catch(() => {})
+      })
+  }
+}
+
+/**
+ * 播放消息提示音
+ * 优先使用音频文件，如果文件不存在则使用 Web Audio API 生成简单提示音
+ */
+const playMessageNotificationSound = () => {
+  // 方案1：尝试播放音频文件
+  try {
+    const audio = new Audio('/sounds/message-notification.mp3')
+    audio.volume = 0.5 // 音量设置为50%
+
+    // 设置超时，如果2秒内没有开始播放，说明文件不存在
+    const playTimeout = setTimeout(() => {
+      // 音频文件不存在，使用方案2
+      playGeneratedNotificationSound()
+    }, 2000)
+
+    audio.play().then(() => {
+      clearTimeout(playTimeout)
+    }).catch((err) => {
+      clearTimeout(playTimeout)
+      console.warn('消息提示音文件播放失败，尝试使用生成音效:', err)
+      // 音频文件不存在或播放失败，使用方案2
+      playGeneratedNotificationSound()
+    })
+  } catch (error) {
+    console.warn('消息提示音播放异常，尝试使用生成音效:', error)
+    playGeneratedNotificationSound()
+  }
+}
+
+/**
+ * 使用 Web Audio API 生成简单的消息提示音（备用方案）
+ * 无需外部音频文件
+ */
+const playGeneratedNotificationSound = () => {
+  try {
+    // 检查浏览器支持
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) {
+      console.warn('浏览器不支持 Web Audio API')
+      return
+    }
+
+    const audioContext = new AudioContext()
+
+    // 创建振荡器（生成音调）
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    // 连接节点
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    // 设置音调参数（"叮"的音效）
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime) // 频率800Hz
+    oscillator.frequency.exponentialRampToValueAtTime(
+      600,
+      audioContext.currentTime + 0.1
+    ) // 频率下降到600Hz
+    oscillator.type = 'sine' // 正弦波（最柔和的波形）
+
+    // 设置音量包络（淡入淡出）
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01) // 快速淡入
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.3
+    ) // 慢速淡出
+
+    // 播放
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.3) // 播放0.3秒
+
+    // 清理资源
+    setTimeout(() => {
+      audioContext.close()
+    }, 400)
+  } catch (error) {
+    console.warn('生成消息提示音失败:', error)
+  }
+}
+
+/**
+ * 实时更新未读消息数量
+ */
+const updateUnreadCount = async () => {
+  try {
+    const res = await countByReadStatus()
+    if (res.code === 200) {
+      const data = res.data
+      userStore.isHaveNews = Boolean(data.unReadCount)
+    }
+  } catch (error) {
+    console.error('更新未读消息数量失败:', error)
+  }
+}
+
+/**
+ * 初始化WebSocket连接
+ */
+const setwebSocket = () => {
+  if (!userStore.userInfo?.id) {
+    console.warn('用户信息不存在，无法建立WebSocket连接')
+    return
+  }
+
+  try {
+    socket.value = new WebSocket(
+      `${import.meta.env.VITE_APP_SOCKET_URL}/ws/${userStore.userInfo.id}`
+    )
+
+    // 连接成功
+    socket.value.onopen = () => {
+      console.log('WebSocket连接成功')
+    }
+
+    // 连接关闭
+    socket.value.onclose = () => {
+      console.log('WebSocket连接关闭')
+    }
+
+    // 连接错误
+    socket.value.onerror = (error) => {
+      console.error('WebSocket连接错误:', error)
+    }
+
+    // 收到消息（统一处理入口）
+    socket.value.onmessage = handleWebSocketMessage
+  } catch (error) {
+    console.error('WebSocket初始化失败:', error)
   }
 }
 // 查看消息
