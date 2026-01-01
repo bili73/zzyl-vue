@@ -510,8 +510,15 @@ const updateUnreadCount = async () => {
 
 /**
  * 初始化WebSocket连接
+ * 注意：后端尚未实现 /ws/{userId} 端点，暂时禁用
+ * 消息通知已通过HTTP轮询实现，如需实时推送请先实现后端端点
  */
 const setwebSocket = () => {
+  // 暂时禁用WebSocket连接
+  console.log('WebSocket连接已禁用，使用HTTP轮询获取消息')
+  return
+
+  /* WebSocket连接代码已注释，等待后端实现
   if (!userStore.userInfo?.id) {
     console.warn('用户信息不存在，无法建立WebSocket连接')
     return
@@ -542,6 +549,7 @@ const setwebSocket = () => {
   } catch (error) {
     console.error('WebSocket初始化失败:', error)
   }
+  */
 }
 // 查看消息
 const handleSubmit = () => {

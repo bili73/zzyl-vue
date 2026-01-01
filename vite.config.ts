@@ -60,6 +60,11 @@ export default ({ mode }: ConfigEnv): UserConfig => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, '')
+        },
+        '/ws': {
+          target: 'ws://localhost:9995',
+          ws: true,
+          changeOrigin: true
         }
       }
     }
