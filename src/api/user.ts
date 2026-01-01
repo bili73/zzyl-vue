@@ -46,14 +46,14 @@ export function updatepersonal(params) {
 export function updatePwd(params) {
   return request.put<any>({
     url: `/user/modify-passwords`,
-    params
+    data: params
   })
 }
 // 校验密码
 export function validatePwd(params) {
   return request.put<any>({
     url: `/user/cmodify-passwords`,
-    params
+    data: params
   })
 }
 // 获取路由信息

@@ -60,7 +60,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import type { FormInstanceFunctions, FormRule } from 'tdesign-vue-next'
 import { useUserStore, usePermissionStore } from '@/store'
-import { userLogins, getRuterInfo, getRuterButton } from '@/api/user'
+import { userLogins, getRuterInfo, getRuterButton, getpersonal } from '@/api/user'
 
 // tab切换数据
 const userStore = useUserStore()
@@ -100,8 +100,20 @@ const onSubmit = async ({ validateResult }) => {
       if (res.code === 200) {
         // 用户token写入 pinia
         await userStore.login(res.data.userToken)
-        userStore.setUserInfo(res.data)
+
+        // 清除旧的用户信息，确保不会显示之前登录的用户数据
+        userStore.$patch({
+          userInfo: {},
+          userAvatar: {}
+        })
+
         loadSt.value = false
+        // 获取当前用户完整信息（包括头像和角色）
+        await getpersonal().then((userInfoRes: any) => {
+          if (userInfoRes.code === 200) {
+            userStore.setUserInfo(userInfoRes.data)
+          }
+        })
         // 获取路由权限信息
         await getRuterInfo().then(async (res) => {
           if (res.code === 200) {

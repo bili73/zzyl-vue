@@ -277,8 +277,8 @@ const handleClose = () => {
 const handleOperate = async () => {
   const val = pwd.value.formData
   const parent = {
-    pw: val.newPassword,
-    oldPw: val.oldPassword
+    newPassword: val.newPassword,
+    oldPassword: val.oldPassword
   }
   const res: any = await updatePwd(parent)
   if (res.code === 200) {

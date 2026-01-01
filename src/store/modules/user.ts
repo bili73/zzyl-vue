@@ -70,6 +70,7 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem(TOKEN_NAME)
       this.token = ''
       this.userInfo = { ...InitUserInfo }
+      this.userAvatar = {} // 清除头像信息
     },
     async removeToken() {
       this.token = ''
@@ -125,7 +126,9 @@ export const useUserStore = defineStore('user', {
         const permissionStore = usePermissionStore()
         permissionStore.initRoutes(ctx.store.roles)
       }
-    }
+    },
+    // 持久化用户信息和头像，确保刷新后头像正常显示
+    paths: ['userInfo', 'userAvatar', 'token']
   }
 })
 

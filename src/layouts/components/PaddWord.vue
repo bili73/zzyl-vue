@@ -111,7 +111,7 @@ const validatePasswordNew = (val) => {
 // 新密码和原密码是否一直
 const validateOldPwd = async (val) => {
   if (val) {
-    const res: any = await validatePwd({ oldPw: val })
+    const res: any = await validatePwd({ oldPassword: val })
     if (res.code === 200) {
       return true
     }
