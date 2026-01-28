@@ -40,10 +40,16 @@ export function orderCancel(params) {
     url: `/orders/${params.orderId}/cancel?reason=${params.reason}`
   })
 }
-// 订单取消
+// 订单退款
 export function orderRefund(params) {
   return request.post<ListModel>({
     url: `/trade-common-feign/refund`,
     params
+  })
+}
+// 更新订单状态
+export function updateOrderStatus(orderId: number, status: number) {
+  return request.post<ListModel>({
+    url: `/orders/${orderId}/status/${status}`
   })
 }

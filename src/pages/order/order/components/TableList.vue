@@ -23,6 +23,20 @@
         <!-- 操作栏 -->
         <template #op="{ row }">
           <div class="operateCon">
+            <!-- 已执行按钮：只在待执行(status=1)时显示 -->
+            <a
+              v-if="row.status === 1"
+              class="font-bt"
+              @click="handleUpdateStatus(row, 2)"
+            >已执行</a
+            >
+            <!-- 已完成按钮：只在已执行(status=2)时显示 -->
+            <a
+              v-if="row.status === 2"
+              class="font-bt"
+              @click="handleUpdateStatus(row, 3)"
+            >已完成</a
+            >
             <a
               class="font-bt"
               :class="row.status !== 0 ? 'disabled' : ''"
@@ -104,7 +118,8 @@ const emit = defineEmits([
   'handleOpen',
   'getCurrent',
   'handleCancel',
-  'handleRefund'
+  'handleRefund',
+  'handleUpdateStatus'
 ])
 // 打开操作弹窗
 const handleOpen = (val) => {
@@ -129,6 +144,10 @@ const handleRefund = (row) => {
   ) {
     emit('handleRefund', row)
   }
+}
+// 更新订单状态
+const handleUpdateStatus = (row, status) => {
+  emit('handleUpdateStatus', row, status)
 }
 // 点击翻页
 const onPageChange = (pageInfo) => {

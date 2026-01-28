@@ -24,6 +24,7 @@
       :total="total"
       @handle-cancel="handleCancel"
       @handle-refund="handleRefund"
+      @handle-update-status="handleUpdateStatus"
       @get-current="getCurrent"
     ></TableList>
     <!-- end -->
@@ -53,7 +54,7 @@ import { getStartTimeStr, getEndTimeStr } from '@/utils/date'
 // 基本数据
 import { orderStatusData } from '@/utils/commonData'
 // 接口
-import { getOrderList, orderCancel, orderRefund } from '@/api/order'
+import { getOrderList, orderCancel, orderRefund, updateOrderStatus } from '@/api/order'
 // tab切换
 import SwitchBar from '@/components/switchBar/switchBar.vue'
 // 表格列表
@@ -187,6 +188,27 @@ const handleRefund = (val) => {
 // 关闭退款弹层
 const handleRefundClose = () => {
   visibleRefund.value = false
+}
+// 更新订单状态
+const handleUpdateStatus = async (row, status) => {
+  const statusText = status === 2 ? '已执行' : '已完成'
+  const confirmMessage = `确认将该订单状态更新为"${statusText}"吗？`
+
+  if (!confirm(confirmMessage)) {
+    return
+  }
+
+  try {
+    const res: any = await updateOrderStatus(row.id, status)
+    if (res.code === 200) {
+      MessagePlugin.success(`订单状态已更新为${statusText}`)
+      getList()
+    } else {
+      MessagePlugin.error(res.msg || '操作失败')
+    }
+  } catch (error) {
+    MessagePlugin.error('操作失败')
+  }
 }
 // 清空搜索表单
 const handleClear = (v) => {
