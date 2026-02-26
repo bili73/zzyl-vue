@@ -767,14 +767,12 @@ export function getElderAgeDistribution (data){
         name: '男',
         type: 'bar',
         barWidth:20,
-        stack: 'one',
         data: data.man
       },
       {
         name: '女',
         type: 'bar',
         barWidth:20,
-        stack: 'one',
         data: data.woman
       },
     ]

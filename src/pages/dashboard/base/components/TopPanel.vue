@@ -1,11 +1,12 @@
+<!-- 顶部数据概览组件 - 修改版 -->
 <template>
   <t-row :gutter="24">
     <t-col :xs="12" :xl="9">
       <t-card title="">
         <template #title>
           <div class="tit">
-            <span>数据概览</span
-            ><span class="time">数据更新：{{ newDate }}</span>
+            <span>数据概览</span>
+            <span class="time">数据更新：{{ newDate }}</span>
           </div>
         </template>
         <div class="dataCon">
@@ -52,7 +53,6 @@
           <div class="userInfo">
             <p class="userTit">
               <i class="icon1"></i>
-
               <span class="textOverflow"
                 ><t-tooltip :content="baseData.email" show-arrow>
                   <span>{{ baseData.email }}</span>
@@ -103,7 +103,6 @@
 
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
-
 import * as echarts from 'echarts/core'
 import {
   TooltipComponent,
@@ -113,24 +112,8 @@ import {
 import { PieChart, LineChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useSettingStore } from '@/store'
-import { getDateInfo, getMonthInfo } from '@/utils/date'
-import {
-  OLDMAN_NUM_A,
-  OLDMAN_NUM_B,
-  OLDMAN_NUM_C,
-  BED_NUM_A,
-  BED_NUM_B,
-  BED_NUM_C,
-  SERVE_NUM_A,
-  SERVE_NUM_B,
-  SERVE_NUM_C,
-  STAFF_NUM_A,
-  STAFF_NUM_B,
-  STAFF_NUM_C,
-  MONEY_NUM_A,
-  MONEY_NUM_B,
-  MONEY_NUM_C
-} from '../constants'
+import { getDateInfo } from '@/utils/date'
+import { getDashboardOverview } from '@/api/dashboard'
 import {
   getOldPieChartDataSet,
   getBedPieChartDataSet,
@@ -154,9 +137,9 @@ echarts.use([
 const store = useSettingStore()
 const newDate = getDateInfo(new Date())
 const chartColors = computed(() => store.chartColors)
+
 // 获取父组件值、方法
 const props = defineProps({
-  // 搜索对象
   baseData: {
     type: Object,
     default: () => ({})
@@ -166,6 +149,26 @@ const props = defineProps({
     default: ''
   }
 })
+
+// 定义响应式数据
+const overviewData = ref({
+  elderTotal: 0,
+  elderOut: 0,
+  elderIn: 0,
+  bedTotal: 0,
+  bedEmpty: 0,
+  bedOccupied: 0,
+  serviceTotal: 0,
+  servicePlan: 0,
+  serviceOutPlan: 0,
+  staffTotal: 0,
+  staffManager: 0,
+  staffNormal: 0,
+  incomeTotal: 0,
+  incomeService: 0,
+  incomeMonthly: 0
+})
+
 // monitorChart
 let oldContainer: HTMLElement // 老人
 let bedContainer: HTMLElement // 床位
@@ -173,61 +176,97 @@ let serveContainer: HTMLElement // 服务
 let staffContainer: HTMLElement // 员工
 let moneyContainer: HTMLElement // 收入
 let countChart: echarts.ECharts
+
 // 老人数量
-const oldNumData = ref(OLDMAN_NUM_A)
-const bedNumData = ref(BED_NUM_A)
-const serveNumData = ref(SERVE_NUM_A)
-const staffNumData = ref(STAFF_NUM_A)
-const moneyNumData = ref(MONEY_NUM_A)
 const renderCountChart = () => {
   if (!oldContainer) {
     oldContainer = document.getElementById('oldContainer')
   }
   countChart = echarts.init(oldContainer)
+  const data = {
+    total: overviewData.value.elderTotal.toString(),
+    data: [
+      { value: overviewData.value.elderOut, name: '外出中' },
+      { value: overviewData.value.elderIn, name: '在院中' }
+    ]
+  }
   countChart.setOption(
-    getOldPieChartDataSet((chartColors as any).value, oldNumData.value)
+    getOldPieChartDataSet((chartColors as any).value, data)
   )
 }
+
 // 床位数量
 const bedCountChart = () => {
   if (!bedContainer) {
     bedContainer = document.getElementById('bedContainer')
   }
   countChart = echarts.init(bedContainer)
+  const data = {
+    total: overviewData.value.bedTotal.toString(),
+    data: [
+      { value: overviewData.value.bedEmpty, name: '空闲中' },
+      { value: overviewData.value.bedOccupied, name: '入住中' }
+    ]
+  }
   countChart.setOption(
-    getBedPieChartDataSet((chartColors as any).value, bedNumData.value)
+    getBedPieChartDataSet((chartColors as any).value, data)
   )
 }
+
 // 服务数量
 const serveCountChart = () => {
   if (!serveContainer) {
     serveContainer = document.getElementById('serveContainer')
   }
   countChart = echarts.init(serveContainer)
+  const data = {
+    total: overviewData.value.serviceTotal,
+    data: [
+      { value: overviewData.value.serviceOutPlan, name: '护理计划外' },
+      { value: overviewData.value.servicePlan, name: '护理计划内' }
+    ]
+  }
   countChart.setOption(
-    getservePieChartDataSet((chartColors as any).value, serveNumData.value)
+    getservePieChartDataSet((chartColors as any).value, data)
   )
 }
+
 // 员工数量
 const staffCountChart = () => {
   if (!staffContainer) {
     staffContainer = document.getElementById('staffContainer')
   }
   countChart = echarts.init(staffContainer)
+  const data = {
+    total: overviewData.value.staffTotal.toString(),
+    data: [
+      { value: overviewData.value.staffManager, name: '管理层' },
+      { value: overviewData.value.staffNormal, name: '普通员工' }
+    ]
+  }
   countChart.setOption(
-    getStaffPieChartDataSet((chartColors as any).value, staffNumData.value)
+    getStaffPieChartDataSet((chartColors as any).value, data)
   )
 }
+
 // 收入金额
 const moneyCountChart = () => {
   if (!moneyContainer) {
     moneyContainer = document.getElementById('moneyContainer')
   }
   countChart = echarts.init(moneyContainer)
+  const data = {
+    total: overviewData.value.incomeTotal,
+    data: [
+      { value: overviewData.value.incomeService, name: '服务费用' },
+      { value: overviewData.value.incomeMonthly, name: '月度费用' }
+    ]
+  }
   countChart.setOption(
-    getMoneyPieChartDataSet((chartColors as any).value, moneyNumData.value)
+    getMoneyPieChartDataSet((chartColors as any).value, data)
   )
 }
+
 const renderCharts = () => {
   renderCountChart()
   bedCountChart()
@@ -236,30 +275,21 @@ const renderCharts = () => {
   moneyCountChart()
 }
 
-onMounted(() => {
-  // 3套数据3天出现一次
-  const date = getMonthInfo(new Date())
-  const num = (date.surplusDay + 1) % 3
-  if (num === 1) {
-    oldNumData.value = OLDMAN_NUM_A
-    bedNumData.value = BED_NUM_A
-    serveNumData.value = SERVE_NUM_A
-    staffNumData.value = STAFF_NUM_A
-    moneyNumData.value = MONEY_NUM_A
-  } else if (num === 2) {
-    oldNumData.value = OLDMAN_NUM_B
-    bedNumData.value = BED_NUM_B
-    serveNumData.value = SERVE_NUM_B
-    staffNumData.value = STAFF_NUM_B
-    moneyNumData.value = MONEY_NUM_B
-  } else {
-    oldNumData.value = OLDMAN_NUM_C
-    bedNumData.value = BED_NUM_C
-    serveNumData.value = SERVE_NUM_C
-    staffNumData.value = STAFF_NUM_C
-    moneyNumData.value = MONEY_NUM_C
+// 获取数据概览
+const fetchOverviewData = async () => {
+  try {
+    const res = await getDashboardOverview()
+    if (res.code === 200) {
+      overviewData.value = res.data
+      renderCharts()
+    }
+  } catch (error) {
+    console.error('获取数据概览失败：', error)
   }
-  renderCharts()
+}
+
+onMounted(() => {
+  fetchOverviewData()
 })
 </script>
 

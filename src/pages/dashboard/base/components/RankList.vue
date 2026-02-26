@@ -1,7 +1,8 @@
+<!-- 列表排名组件 - 修改版 -->
 <template>
-<t-row :gutter="12">
-      <t-col :xs="6" :xl="3">
-        <t-card title="" class="dashboard-rank-card">
+  <t-row :gutter="12">
+    <t-col :xs="6" :xl="3">
+      <t-card title="" class="dashboard-rank-card">
         <template #title>
           <div class="timeTie">
             <div>老人等级分布</div>
@@ -36,11 +37,10 @@
           </div>
         </template>
         <div ref="elderAgeContainer" style="height: 220px"></div>
-        </t-card>
-
-      </t-col>
-      <t-col :xs="12" :xl="5">
-        <t-card title="" class="dashboard-rank-card" >
+      </t-card>
+    </t-col>
+    <t-col :xs="12" :xl="5">
+      <t-card title="" class="dashboard-rank-card">
         <template #title>
           <div class="timeTie">
             <div>预约总览</div>
@@ -90,85 +90,94 @@
 </template>
 
 <script setup lang="ts">
-// 导入样式
 import { onMounted, ref } from 'vue'
 import * as echarts from 'echarts/core'
-import { getWeekDate, getDateInfo, getMonthInfo } from '@/utils/date'
-import {
-  BACKLOG_DATA_A,
-  BACKLOG_DATA_B,
-  BACKLOG_DATA_C,
-  SUBSCRIBE_DATA,
-  ELDER_RANK_DATA_A,
-  ELDER_RANK_DATA_B,
-  ELDER_RANK_DATA_C,
-  ELDER_AGE_DATA_A,
-  ELDER_AGE_DATA_B,
-  ELDER_AGE_DATA_C
-} from '../constants'
+import { getWeekDate, getDateInfo } from '@/utils/date'
+import { getElderDistribution, getReservationList } from '@/api/dashboard'
 import { getElderAgeDistribution, getElderRankDistribution } from '..'
 
 const dataObj = ref([])
 const isToday = ref(false)
 const selectTime = ref('')
 const dayActive = ref(0)
-const subscribeData = ref([]) // 触发每天的数据
-const subDataArr = ref([]) // 一月的数据
-const backlogData = ref(BACKLOG_DATA_A) // 待办事项
+const subscribeData = ref([])
 let myChart: echarts.ECharts
-const elderRankContainer = ref() // 老人等级
-const elderAgeContainer = ref() // 老人年龄
+const elderRankContainer = ref()
+const elderAgeContainer = ref()
 
-const elderRankData = ref(ELDER_RANK_DATA_A)
-const elderAgeData = ref(ELDER_AGE_DATA_A)
+const elderRankData = ref([])
+const elderAgeData = ref({
+  man: [],
+  woman: []
+})
+
+// 获取老人分布数据
+const fetchElderDistribution = async () => {
+  try {
+    const res = await getElderDistribution()
+    if (res.code === 200) {
+      elderRankData.value = res.data.rankDistribution
+      elderAgeData.value = res.data.ageDistribution
+
+      // 重新渲染图表
+      elderRankChart()
+      elderAgeChart()
+    }
+  } catch (error) {
+    console.error('获取老人分布失败：', error)
+  }
+}
+
+// 获取预约总览数据
+const fetchReservationList = async (date: string) => {
+  try {
+    const res = await getReservationList(date)
+    if (res.code === 200) {
+      subscribeData.value = res.data
+    }
+  } catch (error) {
+    console.error('获取预约总览失败：', error)
+    subscribeData.value = []
+  }
+}
 
 onMounted(() => {
   // 设置一周的日期
   dataObj.value = getWeekDate({ baselineDate: new Date() })
   selectTime.value = time()
-  subDataArr.value = [...SUBSCRIBE_DATA, ...SUBSCRIBE_DATA]
-  subscribeData.value = subDataArr.value[0]
+
+  // 获取老人分布数据
+  fetchElderDistribution()
+
+  // 获取今日预约数据
+  fetchReservationList(selectTime.value)
+
+  // 检查是否可以点击上一周
   isChick(dataObj.value)
-  // 3套数据3天出现一次
-  const date = getMonthInfo(new Date())
-  const num = (date.surplusDay + 1) % 3
-  if (num === 1) {
-    backlogData.value = BACKLOG_DATA_A
-
-    elderRankData.value = ELDER_RANK_DATA_A
-    elderAgeData.value = ELDER_AGE_DATA_A
-  } else if (num === 2) {
-    backlogData.value = BACKLOG_DATA_B
-
-    elderRankData.value = ELDER_RANK_DATA_B
-    elderAgeData.value = ELDER_AGE_DATA_B
-  } else {
-    backlogData.value = BACKLOG_DATA_C
-
-    elderRankData.value = ELDER_RANK_DATA_C
-    elderAgeData.value = ELDER_AGE_DATA_C
-  }
 
   window.addEventListener('resize', handleResize)
-
-  elderRankChart()
-  elderAgeChart()
 })
 
 const handleResize = () => {
-  myChart.resize()
+  if (myChart) {
+    myChart.resize()
+  }
 }
 
 // 老人等级分布
 const elderRankChart = () => {
-  myChart = echarts.init(elderRankContainer.value)
-  myChart.setOption(getElderRankDistribution(elderRankData.value))
+  if (elderRankContainer.value) {
+    myChart = echarts.init(elderRankContainer.value)
+    myChart.setOption(getElderRankDistribution(elderRankData.value))
+  }
 }
 
 // 老人年龄分布
 const elderAgeChart = () => {
-  myChart = echarts.init(elderAgeContainer.value)
-  myChart.setOption(getElderAgeDistribution(elderAgeData.value))
+  if (elderAgeContainer.value) {
+    myChart = echarts.init(elderAgeContainer.value)
+    myChart.setOption(getElderAgeDistribution(elderAgeData.value))
+  }
 }
 
 // 是否可以触发上一周
@@ -186,18 +195,16 @@ const isChick = (date) => {
   dataObj.value.forEach((obj, i) => {
     if (obj.dateStr === selectTime.value) {
       dayActive.value = i
-      subscribeData.value = subDataArr.value[obj.day]
     }
     // 如果上一页不能触发了，显示当前的时间
     if (isToday.value) {
       selectTime.value = time()
-      subscribeData.value = subDataArr.value[obj.day]
     }
   })
 }
+
 // 上一周
 const getPreWeek = () => {
-  // 获取以当天为基准日期的下星期数据
   if (!isToday.value) {
     dayActive.value = 0
     dataObj.value = getWeekDate({
@@ -206,32 +213,42 @@ const getPreWeek = () => {
     })
     selectTime.value = dataObj.value[0].dateStr
     isChick(dataObj.value)
+    // 获取新日期的预约数据
+    fetchReservationList(selectTime.value)
   }
 }
+
 // 下一周
 const getNextWeek = () => {
   dayActive.value = 0
-  // 获取以当天为基准日期的下星期数据
   dataObj.value = getWeekDate({
     baselineDate: new Date(dataObj.value[0].dateStr),
     range: 7
   })
 
   isChick(dataObj.value)
-  selectTime.value = dataObj.value[0].dateStr // 把一周的第一天设置为当前日期
-  subscribeData.value = subDataArr.value[dataObj.value[0].day]
+  selectTime.value = dataObj.value[0].dateStr
+  // 获取新日期的预约数据
+  fetchReservationList(selectTime.value)
 }
+
 // 触发当天显示的数据
 const handleDay = (item, i) => {
   dayActive.value = i
   selectTime.value = item.dateStr
-  subscribeData.value = subDataArr.value[item.day]
+  // 获取选中日期的预约数据
+  fetchReservationList(item.dateStr)
 }
+
 // 回到今天
 const goToday = () => {
   dataObj.value = getWeekDate({ baselineDate: new Date() })
   isChick(dataObj.value)
+  selectTime.value = time()
+  // 获取今日预约数据
+  fetchReservationList(selectTime.value)
 }
+
 // 当前时间
 const time = () => {
   return getDateInfo(new Date())
