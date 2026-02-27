@@ -176,7 +176,7 @@ const listOldManData = ref([]) // 获取所有老人
 const pagination = ref<Object | any>({
   pageSize: 5,
   pageNum: 1, // 默认当前页
-  status: 0
+  status: 1 // 查询入住中的老人（1=入住中，0=未入住）
 })
 const checkInTime = ref('') // 设置入住期限
 const costTime = ref('') // 设置配用期限
@@ -224,10 +224,11 @@ const handleSearch = () => {
 }
 // 重置，清空搜索框
 const handleReset = () => {
-  // 重置页码
+  // 重置页码，但保留status筛选
   pagination.value = {
     pageSize: 5,
-    pageNum: 1
+    pageNum: 1,
+    status: 1 // 保持查询入住中的老人
   }
   getOldList()
 }
@@ -249,7 +250,8 @@ const handleCloseDialog = () => {
   dialogVisible.value = false
   pagination.value = {
     pageSize: 5,
-    pageNum: 1
+    pageNum: 1,
+    status: 1 // 保持查询入住中的老人
   }
 }
 // 翻页设置当前页

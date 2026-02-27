@@ -183,9 +183,9 @@ const setQuitTime = (time) => {
 // 获取费用清算数据
 const getRetreat = async () => {
   const data = formData.value
-  if (data.id && data.checkOutTime) {
+  if (data.elderId && data.checkOutTime) {
     const parent = {
-      elderId: data.id,
+      elderId: data.elderId,
       checkOutTime: data.checkOutTime
     }
     await getRetreatSettlement(parent).then((res) => {
@@ -217,7 +217,7 @@ const handleSub = () => {
       releasePdfUrl: data.releasePdfUrl,
       refundVoucherDto: {
         ...userStore.$state.billVoucheData,
-        elderId: data.id
+        elderId: data.elderId
       }
     }
     if (valid === true) {

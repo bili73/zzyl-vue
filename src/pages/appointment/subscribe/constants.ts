@@ -43,11 +43,6 @@ export const COLUMNS = [
     colKey: 'time'
   },
   {
-    title: '创建人',
-    minWidth: 180,
-    colKey: 'creator'
-  },
-  {
     title: '创建时间',
     minWidth: 220,
     colKey: 'createTime'

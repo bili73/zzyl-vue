@@ -25,6 +25,7 @@
             @setBedId="setBedId"
             @textBlurPrice="textBlurPrice"
             @handleNursing="handleNursing"
+            @getNewCostTime="getNewCostTime"
           ></ConfigurationForm>
           <!-- end -->
           <!-- 签约办理 -->
@@ -252,6 +253,12 @@ const handleNursing = (val, data) => {
     formData.value.nursingCost = ''
     formData.value.fee = ''
   }
+}
+// 费用期限变更
+const getNewCostTime = (val) => {
+  // 费用期限变更时的逻辑处理
+  // 可以在这里添加费用计算或其他业务逻辑
+  console.log('费用期限已变更：', val)
 }
 // 获取床位id
 const setBedId = (val, obj) => {

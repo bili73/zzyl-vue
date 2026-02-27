@@ -152,7 +152,7 @@ const regTable = ref() // 定义表格ref
 const ruleForm = ref(null) // 定义表单ref
 const visible = ref(false) // 用来控制弹层显示隐藏
 const selectedRowKeys = ref([]) // 选中的数据
-const checkTabData = reactive<Object | any>({}) // 选中的list
+const checkTabData = ref([]) // 选中的list
 // 监听弹层是显示还是隐藏
 watch(props, (val) => {
   visible.value = val.dialogVisible
