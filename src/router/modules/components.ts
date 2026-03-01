@@ -355,6 +355,14 @@ const normalRouter = [
         meta: {
           title: '用户信息'
         }
+      },
+      {
+        path: 'message',
+        name: 'message',
+        component: () => import('@/pages/permission/message/index.vue'),
+        meta: {
+          title: '消息管理'
+        }
       }
     ]
   },

@@ -123,6 +123,8 @@ const operateTitle = ref(null) // 操作标题
 const operateText = ref('') // 要操作的内容提示
 const newNewsData = ref([]) // 组合新的消息tab
 const isTab = ref(false) // 用来解决组件数据不更新问题
+const unreadCount = ref(0) // 未读消息数量
+
 // 分页
 const pagination = ref<Object | any>({
   pageSize: 10,
@@ -154,12 +156,14 @@ const getCountStatus = async () => {
       const data = res.data
       newsData.forEach((ele: any) => {
         if (ele.id === 0) {
-          ele.value = data.unReadCount
+          ele.value = data.unread // 使用小写的unread
         } else {
-          ele.value = data.completedReadCount
+          ele.value = data.read // 使用小写的read
         }
       })
       newNewsData.value = newsData
+      // 更新未读消息数量
+      unreadCount.value = data.unread || 0 // 使用小写的unread
     }
   })
 }
@@ -307,10 +311,48 @@ const onChange = async (val) => {
   // val false：关闭，true：开启
   await updateVoiceNotifyStatus(val ? 1 : 0).then((res) => {
     if (res.code === 200) {
+      checked.value = val
       MessagePlugin.success('操作成功')
+
+      // 如果开启语音通知，立即播放一次提示音让用户知道
+      if (val) {
+        setTimeout(() => {
+          playBeepSound()
+        }, 300)
+      }
     }
   })
 }
+
+/**
+ * 使用Web Audio API生成提示音
+ */
+const playBeepSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    // 设置音调频率(Hz） - 更高的频率更刺耳
+    oscillator.frequency.value = 880 // A5音符
+    oscillator.type = 'sine' // 正弦波，声音更柔和
+    // 设置音量包络（渐入渐出）
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5)
+    // 播放0.5秒
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.5)
+    console.log('🔊 Web Audio API 提示音已播放')
+  } catch (error) {
+    console.error('播放提示音失败:', error)
+    MessagePlugin.warning('提示音播放失败，请检查浏览器音量设置')
+  }
+}
+
 // 全部删除
 const handleAllDelete = async () => {
   await allDelete(pagination.value.isRead).then((res) => {

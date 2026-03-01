@@ -35,7 +35,12 @@
             class="toNews"
             :class="userStore.isHaveNews ? 'active' : ''"
             @click="handleNew"
-          ></div>
+          >
+            <!-- 未读消息数量徽章 -->
+            <div v-if="unreadCount > 0" class="unread-badge">
+              <span class="badge-number">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+            </div>
+          </div>
           <t-dropdown :min-column-width="135" trigger="click">
             <template #dropdown>
               <t-dropdown-menu>
@@ -68,6 +73,18 @@
           </t-dropdown>
         </div>
         <div v-else class="operations-container">
+          <!-- 消息通知图标 -->
+          <div
+            class="toNews"
+            :class="userStore.isHaveNews ? 'active' : ''"
+            @click="handleNew"
+            style="margin-right: 12px;"
+          >
+            <!-- 未读消息数量徽章 -->
+            <div v-if="unreadCount > 0" class="unread-badge">
+              <span class="badge-number">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+            </div>
+          </div>
           <!-- 搜索框 -->
           <!-- <search v-if="layout !== 'side'" :layout="layout" /> -->
 
@@ -148,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { PropType } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
@@ -162,7 +179,8 @@ import PaddWord from '../components/PaddWord.vue'
 import OperateDialog from '@/components/OperateDialog/index.vue'
 import Warn from '@/components/warn/index.vue'
 import { updatePwd } from '@/api/user'
-import { countByReadStatus } from '@/api/news'
+import { countByReadStatus, queryVoiceNotifyStatus } from '@/api/news'
+import messageWebSocket from '@/utils/message-websocket'
 
 const props = defineProps({
   theme: {
@@ -209,6 +227,10 @@ const time = ref(10)
 const avatar = ref(
   'https://yjy-oss-videos.oss-accelerate.aliyuncs.com/grzxhz.jpg'
 )
+const unreadCount = ref(0) // 未读消息数量
+const voiceNotifyEnabled = ref(false) // 语音提醒开关状态
+let pollingTimer: NodeJS.Timeout | null = null // 轮询定时器
+let previousUnreadCount = 0 // 上次的未读消息数量
 // 打开设置
 const toggleSettingPanel = () => {
   settingStore.updateConfig({
@@ -242,12 +264,30 @@ const menuCls = computed(() => {
 })
 // 获取已读未读消息数量
 const getCountStatus = async () => {
-  await countByReadStatus().then((res) => {
+  try {
+    const res = await countByReadStatus()
     if (res.code === 200) {
       const data = res.data
-      userStore.isHaveNews = Boolean(data.unReadCount)
+      userStore.isHaveNews = Boolean(data.unread)
+      unreadCount.value = data.unread || 0
+      previousUnreadCount = unreadCount.value // 初始化之前的未读数量
     }
-  })
+  } catch (error) {
+    console.error('获取未读消息数量失败:', error)
+  }
+}
+
+// 查询语音提醒状态
+const getVoiceNotifyStatus = async () => {
+  try {
+    const res = await queryVoiceNotifyStatus()
+    if (res.code === 200) {
+      voiceNotifyEnabled.value = res.data === 1
+      console.log('语音提醒状态:', voiceNotifyEnabled.value ? '已开启' : '已关闭')
+    }
+  } catch (error) {
+    console.error('查询语音提醒状态失败:', error)
+  }
 }
 // 改变侧边栏
 const changeCollapsed = () => {
@@ -302,26 +342,24 @@ const handleWarnClose = () => {
   visibleWarn.value = false
 }
 // 语音播报/报警异常
-const socket = ref(null)
 const warnData = ref({}) // 报警数据
 const messageNotificationAudio = ref(null) // 消息提示音
 
 /**
  * WebSocket 消息处理（统一入口）
- * @param {MessageEvent} event - WebSocket消息事件
+ * @param {Object} data - WebSocket消息数据
  */
-const handleWebSocketMessage = (event) => {
+const handleWebSocketMessage = (data) => {
   try {
-    const res = JSON.parse(event.data)
-    console.log('收到WebSocket消息:', res)
+    console.log('处理WebSocket消息:', data)
 
     // 报警消息（notifyType === 1）
-    if (res.notifyType === 1) {
-      handleAlarmMessage(res)
+    if (data.notifyType === 1) {
+      handleAlarmMessage(data)
     }
     // 普通消息通知（notifyType === 2 或其他）
     else {
-      handleNormalMessageNotification(res)
+      handleNormalMessageNotification(data)
     }
 
     // 统一更新未读消息数量
@@ -501,7 +539,18 @@ const updateUnreadCount = async () => {
     const res = await countByReadStatus()
     if (res.code === 200) {
       const data = res.data
-      userStore.isHaveNews = Boolean(data.unReadCount)
+      const newUnreadCount = data.unread || 0
+
+      // 检测是否有新消息
+      if (newUnreadCount > previousUnreadCount && previousUnreadCount > 0) {
+        // 有新消息，播放提示音
+        console.log('检测到新消息:', newUnreadCount - previousUnreadCount)
+        playNotificationSound()
+      }
+
+      userStore.isHaveNews = Boolean(newUnreadCount)
+      unreadCount.value = newUnreadCount
+      previousUnreadCount = newUnreadCount
     }
   } catch (error) {
     console.error('更新未读消息数量失败:', error)
@@ -509,47 +558,57 @@ const updateUnreadCount = async () => {
 }
 
 /**
+ * 播放消息提示音
+ */
+const playNotificationSound = () => {
+  // 检查语音提醒开关状态
+  if (voiceNotifyEnabled.value) {
+    console.log('播放消息提示音')
+    playMessageNotificationSound()
+  } else {
+    console.log('语音提醒已关闭，不播放提示音')
+  }
+}
+
+/**
+ * 启动轮询检查新消息
+ */
+const startPolling = () => {
+  // 每10秒检查一次
+  pollingTimer = setInterval(() => {
+    updateUnreadCount()
+  }, 10000)
+  console.log('启动消息轮询（10秒间隔）')
+}
+
+/**
+ * 停止轮询
+ */
+const stopPolling = () => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+    console.log('停止消息轮询')
+  }
+}
+
+/**
  * 初始化WebSocket连接
- * 注意：后端尚未实现 /ws/{userId} 端点，暂时禁用
- * 消息通知已通过HTTP轮询实现，如需实时推送请先实现后端端点
+ * 由于SockJS兼容性问题，暂时禁用WebSocket，使用HTTP轮询代替
  */
 const setwebSocket = () => {
-  // 暂时禁用WebSocket连接
-  console.log('WebSocket连接已禁用，使用HTTP轮询获取消息')
+  // WebSocket连接禁用，使用轮询机制
+  console.log('WebSocket已禁用，使用HTTP轮询获取消息')
   return
 
-  /* WebSocket连接代码已注释，等待后端实现
-  if (!userStore.userInfo?.id) {
-    console.warn('用户信息不存在，无法建立WebSocket连接')
-    return
-  }
+  // 连接WebSocket
+  // messageWebSocket.connect()
 
-  try {
-    socket.value = new WebSocket(
-      `${import.meta.env.VITE_APP_SOCKET_URL}/ws/${userStore.userInfo.id}`
-    )
-
-    // 连接成功
-    socket.value.onopen = () => {
-      console.log('WebSocket连接成功')
-    }
-
-    // 连接关闭
-    socket.value.onclose = () => {
-      console.log('WebSocket连接关闭')
-    }
-
-    // 连接错误
-    socket.value.onerror = (error) => {
-      console.error('WebSocket连接错误:', error)
-    }
-
-    // 收到消息（统一处理入口）
-    socket.value.onmessage = handleWebSocketMessage
-  } catch (error) {
-    console.error('WebSocket初始化失败:', error)
-  }
-  */
+  // 订阅消息通知
+  // messageWebSocket.subscribeMessages((data) => {
+  //   console.log('收到WebSocket消息:', data)
+  //   handleWebSocketMessage(data)
+  // })
 }
 // 查看消息
 const handleSubmit = () => {
@@ -570,6 +629,12 @@ const handleNew = () => {
 onMounted(() => {
   setwebSocket()
   getCountStatus()
+  getVoiceNotifyStatus() // 查询语音提醒状态
+  startPolling() // 启动轮询检查新消息
+})
+
+onUnmounted(() => {
+  stopPolling() // 停止轮询
 })
 </script>
 <style lang="less" scoped>
@@ -581,6 +646,34 @@ onMounted(() => {
   position: relative;
   background-image: url('@/assets/test-img/newsCenter.png');
   background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  // 未读消息数量徽章
+  .unread-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    min-width: 20px;
+    height: 20px;
+    background: #ff4d4f;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+
+    .badge-number {
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+      line-height: 1;
+      white-space: nowrap;
+    }
+  }
 }
 .active::after {
   display: inline-block;

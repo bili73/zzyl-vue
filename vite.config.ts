@@ -12,10 +12,14 @@ export default ({ mode }: ConfigEnv): UserConfig => {
   const { VITE_BASE_URL } = loadEnv(mode, CWD)
   return {
     base: './',
-    define: {},
+    define: {
+      global: 'globalThis',
+      'process.env': {}
+    },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
+        util: 'util'
       }
     },
 
