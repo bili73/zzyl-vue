@@ -35,4 +35,13 @@ import Login from './components/Login.vue'
   width: 218px;
   height: 52px;
 }
+
+.system-name {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 20px;
+  letter-spacing: 2px;
+}
 </style>

@@ -8,8 +8,8 @@
           class="header-logo-container"
           @click="handleNav('/dashboard/base')"
         >
-          <logo-full v-if="settingStore.mode === 'light'" class="t-logo" />
-          <img v-else src="@/assets/logBlackTemFull.png" alt="" />
+          <img v-if="settingStore.mode === 'light'" src="@/assets/test-img/logo-full-light.png" alt="智慧养老" class="t-logo" />
+          <img v-else src="@/assets/logBlackTemFull.png" alt="智慧养老" />
         </span>
         <div v-else class="header-operate-left">
           <t-button
