@@ -65,13 +65,8 @@ const permissionStore = usePermissionStore()
 const loadSt = ref(false)
 // 登录基础设置
 const formData = ref({
-  // asdasdsa@qq.com
-  // fyz@qq.com
-
-  username: 'admin@qq.com',
-  // 正式环境
-  // username: 'admin@qq.comm',
-  password: '888itcast.CN764%...'
+  username: '',
+  password: ''
 } as any)
 // 表单校验
 const formRules: Record<string, FormRule[]> = {
